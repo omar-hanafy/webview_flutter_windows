@@ -5,7 +5,7 @@ if(POLICY CMP0175)
   cmake_policy(SET CMP0175 NEW)
 endif()
 
-set(PROJECT_NAME "webview_windows")
+set(PROJECT_NAME "webview_flutter_windows")
 
 set(WIL_VERSION "1.0.260126.7")
 set(WEBVIEW_VERSION "1.0.3967.48")
@@ -16,7 +16,7 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed
-set(PLUGIN_NAME "webview_windows_plugin")
+set(PLUGIN_NAME "webview_flutter_windows_plugin")
 
 # NuGet tooling shared with the native test build (windows/test).
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nuget.cmake)
@@ -73,6 +73,6 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 )
 
 # Set bundled libraries
-set(webview_windows_bundled_libraries
+set(webview_flutter_windows_bundled_libraries
   PARENT_SCOPE
 )

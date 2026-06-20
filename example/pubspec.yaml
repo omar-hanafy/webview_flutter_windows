@@ -1,5 +1,5 @@
-name: webview_windows_example
-description: Demonstrates how to use the webview_windows plugin.
+name: webview_flutter_windows_example
+description: Demonstrates how to use the webview_flutter_windows plugin.
 
 publish_to: 'none'
 
@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  webview_windows:
+  webview_flutter_windows:
     path: ../
 
 dev_dependencies:

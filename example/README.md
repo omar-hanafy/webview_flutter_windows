@@ -1,6 +1,6 @@
-# webview_windows_example
+# webview_flutter_windows_example
 
-Demonstrates how to use the webview_windows plugin: a minimal browser with a
+Demonstrates how to use the webview_flutter_windows plugin: a minimal browser with a
 URL bar, loading indicator, DevTools access, permission prompts, and
 suspend/resume.
 

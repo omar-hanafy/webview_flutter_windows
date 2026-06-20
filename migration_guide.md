@@ -1,9 +1,9 @@
 # Migration guide
 
-## Upgrading from `webview_windows` 0.4.x to 1.0.0
+## Upgrading from `webview_windows` 0.4.x to `webview_flutter_windows` 1.0.0
 
 Version 1.0.0 is the first stable release of
-[omar-hanafy/flutter-webview-windows](https://github.com/omar-hanafy/flutter-webview-windows),
+[omar-hanafy/webview_flutter_windows](https://github.com/omar-hanafy/webview_flutter_windows),
 a maintained fork of
 [jnschulze/flutter-webview-windows](https://github.com/jnschulze/flutter-webview-windows).
 It includes everything released by upstream up to commit `ed81bbe`, fixes the
@@ -11,22 +11,42 @@ window focus loss issue
 ([upstream #230](https://github.com/jnschulze/flutter-webview-windows/issues/230)),
 and modernizes both the Dart and the native layers.
 
-Most apps only need steps 1 and 2. The remaining sections cover behavior
+Most apps only need steps 1 to 3. The remaining sections cover behavior
 changes that matter only if your code relied on the old semantics, plus the
 focus workarounds you can now delete.
 
-1. [New SDK floors](#1-new-sdk-floors)
-2. [`WebErrorStatus` renames](#2-weberrorstatus-renames)
-3. [Event streams are now broadcast](#3-event-streams-are-now-broadcast)
-4. [`StateError` instead of crashes](#4-stateerror-instead-of-crashes)
-5. [`initialize()`, `ready`, and `dispose()`](#5-initialize-ready-and-dispose)
-6. [`getButton` was removed](#6-getbutton-was-removed)
-7. [Focus handling is built in now](#7-focus-handling-is-built-in-now)
-8. [Native toolchain notes](#8-native-toolchain-notes)
+1. [Package name and import](#1-package-name-and-import)
+2. [New SDK floors](#2-new-sdk-floors)
+3. [`WebErrorStatus` renames](#3-weberrorstatus-renames)
+4. [Event streams are now broadcast](#4-event-streams-are-now-broadcast)
+5. [`StateError` instead of crashes](#5-stateerror-instead-of-crashes)
+6. [`initialize()`, `ready`, and `dispose()`](#6-initialize-ready-and-dispose)
+7. [`getButton` was removed](#7-getbutton-was-removed)
+8. [Focus handling is built in now](#8-focus-handling-is-built-in-now)
+9. [Native toolchain notes](#9-native-toolchain-notes)
 
 ---
 
-### 1. New SDK floors
+### 1. Package name and import
+
+Replace the dependency name:
+
+```yaml
+dependencies:
+  webview_flutter_windows: ^1.0.0
+```
+
+Use the new canonical library import:
+
+```dart
+import 'package:webview_flutter_windows/webview_flutter_windows.dart';
+```
+
+The compatibility barrel
+`package:webview_flutter_windows/webview_windows.dart` remains available, but
+new code should use `webview_flutter_windows.dart`.
+
+### 2. New SDK floors
 
 The package now requires:
 
@@ -40,7 +60,7 @@ The Windows requirements are unchanged: Windows 10 1809 or newer at runtime,
 and the [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 must be installed on the user's machine.
 
-### 2. `WebErrorStatus` renames
+### 3. `WebErrorStatus` renames
 
 The `WebErrorStatus` values dropped their redundant prefix and follow standard
 Dart `lowerCamelCase`. The underlying indexes (the native wire format) are
@@ -84,7 +104,7 @@ Related behavior change: when a newer WebView2 runtime reports a status this
 package does not know yet, `onLoadError` now emits `WebErrorStatus.unknown`
 instead of crashing the event handler with a `RangeError`.
 
-### 3. Event streams are now broadcast
+### 4. Event streams are now broadcast
 
 In 0.4.x, `url`, `title`, `historyChanged`, `securityStateChanged`,
 `webMessage`, and `onLoadError` were single-subscription streams. In 1.0.0
@@ -113,7 +133,7 @@ await controller.loadUrl('https://flutter.dev');
 All streams also emit `done` when the controller is disposed, so
 subscriptions can be tied to the controller's lifetime.
 
-### 4. `StateError` instead of crashes
+### 5. `StateError` instead of crashes
 
 Calling any controller method before `initialize()` has completed used to
 fail an `assert` in debug builds and crash with a `LateInitializationError`
@@ -135,7 +155,7 @@ use-before-initialize bug. The fix is the same as it always was: await
 Methods called on a *disposed* controller are unchanged: they remain silent
 no-ops (and return `null` where applicable).
 
-### 5. `initialize()`, `ready`, and `dispose()`
+### 6. `initialize()`, `ready`, and `dispose()`
 
 The controller lifecycle is hardened. None of this requires code changes in a
 correct app, but the observable behavior differs:
@@ -159,7 +179,7 @@ correct app, but the observable behavior differs:
   concurrently created native instance cannot be orphaned), after a failed
   initialization, and when called twice.
 
-### 6. `getButton` was removed
+### 7. `getButton` was removed
 
 The top-level `getButton` function was an internal input-mapping detail and
 is no longer exported. In the unlikely case you used it, inline the mapping:
@@ -179,7 +199,7 @@ PointerButton getButton(int value) {
 }
 ```
 
-### 7. Focus handling is built in now
+### 8. Focus handling is built in now
 
 1.0.0 fixes
 [upstream #230](https://github.com/jnschulze/flutter-webview-windows/issues/230)
@@ -210,7 +230,7 @@ final focused = controller.hasNativeFocus;
 `Tab` traversal is also fixed: tabbing past the page's last focusable element
 returns focus to Flutter instead of cycling inside the page.
 
-### 8. Native toolchain notes
+### 9. Native toolchain notes
 
 These only matter for building, not for your Dart code:
 
@@ -234,4 +254,4 @@ These only matter for building, not for your Dart code:
 ---
 
 If you run into a migration issue not covered here, please
-[open an issue](https://github.com/omar-hanafy/flutter-webview-windows/issues).
+[open an issue](https://github.com/omar-hanafy/webview_flutter_windows/issues).

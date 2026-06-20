@@ -1,7 +1,7 @@
-# webview_windows
+# webview_flutter_windows
 
-[![pub package](https://img.shields.io/pub/v/webview_windows.svg)](https://pub.dev/packages/webview_windows)
-[![CI](https://github.com/omar-hanafy/flutter-webview-windows/actions/workflows/ci.yml/badge.svg)](https://github.com/omar-hanafy/flutter-webview-windows/actions/workflows/ci.yml)
+[![pub package](https://img.shields.io/pub/v/webview_flutter_windows.svg)](https://pub.dev/packages/webview_flutter_windows)
+[![CI](https://github.com/omar-hanafy/webview_flutter_windows/actions/workflows/ci.yml/badge.svg)](https://github.com/omar-hanafy/webview_flutter_windows/actions/workflows/ci.yml)
 
 A WebView for Flutter on Windows, powered by
 [Microsoft Edge WebView2](https://learn.microsoft.com/en-us/microsoft-edge/webview2/).
@@ -11,12 +11,14 @@ issues, and transforms, opacity, and widgets painted on top all just work.
 
 > **Fork notice:** this is a maintained fork of
 > [jnschulze/flutter-webview-windows](https://github.com/jnschulze/flutter-webview-windows).
+> It is not affiliated with the Flutter team's `webview_flutter` packages and
+> keeps the controller/widget API from `webview_windows`.
 > On top of upstream `0.4.0` it fixes the
 > [window focus loss issue (#230)](https://github.com/jnschulze/flutter-webview-windows/issues/230),
 > hardens the native COM and channel layers, modernizes the toolchain
 > (WebView2 SDK `1.0.3967.48`, WIL `1.0.260126.7`, C++23), and ships a real
 > test suite. Coming from upstream? Read the
-> [migration guide](https://github.com/omar-hanafy/flutter-webview-windows/blob/main/migration_guide.md).
+> [migration guide](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/migration_guide.md).
 
 ![Example app](https://user-images.githubusercontent.com/720469/116823636-d8b9fe00-ab85-11eb-9f91-b7bc819615ed.png)
 
@@ -63,16 +65,16 @@ issues, and transforms, opacity, and widgets painted on top all just work.
 ## Installation
 
 ```sh
-flutter pub add webview_windows
+flutter pub add webview_flutter_windows
 ```
 
 To track unreleased changes, depend on the repository instead:
 
 ```yaml
 dependencies:
-  webview_windows:
+  webview_flutter_windows:
     git:
-      url: https://github.com/omar-hanafy/flutter-webview-windows.git
+      url: https://github.com/omar-hanafy/webview_flutter_windows.git
       ref: main
 ```
 
@@ -83,7 +85,7 @@ widget:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:webview_windows/webview_windows.dart';
+import 'package:webview_flutter_windows/webview_flutter_windows.dart';
 
 class BrowserPane extends StatefulWidget {
   const BrowserPane({super.key});
@@ -331,7 +333,7 @@ Windows versions older than Windows 10 1809 are not supported.
 
 Version 1.0.0 contains breaking changes (SDK floors, broadcast streams,
 `WebErrorStatus` renames, stricter lifecycle errors). The
-[migration guide](https://github.com/omar-hanafy/flutter-webview-windows/blob/main/migration_guide.md)
+[migration guide](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/migration_guide.md)
 walks through every one of them, including the focus workarounds you can now
 delete.
 

@@ -17,7 +17,7 @@ namespace {
 // side (lib/src/enums.dart) decodes them as indexes into the corresponding
 // Dart enums. The integer values pinned below ARE the protocol: if any of
 // these asserts fires, the matching Dart enum (and its contract test in
-// test/webview_windows_test.dart) must be updated in the same change.
+// test/webview_flutter_windows_test.dart) must be updated in the same change.
 // ---------------------------------------------------------------------------
 
 static_assert(static_cast<int>(WebviewLoadingState::None) == 0);

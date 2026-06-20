@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:webview_windows/webview_windows.dart';
+import 'package:webview_flutter_windows/webview_flutter_windows.dart';
 
 const MethodChannel _pluginChannel = MethodChannel('io.jns.webview.win');
 const StandardMethodCodec _codec = StandardMethodCodec();

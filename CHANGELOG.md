@@ -1,17 +1,19 @@
 ## 1.0.0
 
-First stable release of this fork
-([omar-hanafy/flutter-webview-windows](https://github.com/omar-hanafy/flutter-webview-windows)),
-built on top of upstream `0.4.0` and including all upstream changes up to
-`ed81bbe`. This API is the maintained baseline going forward: any future
-breaking change will come with a major version bump.
+First stable release of `webview_flutter_windows`
+([omar-hanafy/webview_flutter_windows](https://github.com/omar-hanafy/webview_flutter_windows)),
+a maintained fork/rebuild of upstream `webview_windows` `0.4.0` including all
+upstream changes up to `ed81bbe`. This API is the maintained baseline going
+forward: any future breaking change will come with a major version bump.
 
 This release contains **breaking changes**. See the
-[migration guide](https://github.com/omar-hanafy/flutter-webview-windows/blob/main/migration_guide.md)
+[migration guide](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/migration_guide.md)
 for step-by-step upgrade instructions.
 
 ### Breaking changes
 
+* Published under the new package name `webview_flutter_windows`; migrate
+  dependencies and imports from `webview_windows`.
 * Requires Dart 3.12+ / Flutter 3.44+.
 * All `WebviewController` event streams are now broadcast streams: multiple
   listeners are allowed, and events emitted while nobody listens are dropped.
@@ -94,15 +96,6 @@ Fixes the long-standing focus loss issue
   the consuming app; the CMake minimum is 3.20.
 * The NuGet bootstrap is SHA-256 verified and dependencies are installed at
   configure time, so first builds no longer race the imported `.targets`.
-
-### Tests
-
-* New Dart test suite pinning the channel contract of every controller
-  method, the controller lifecycle, all event types, widget input forwarding,
-  and focus coordination.
-* New native C++ unit tests (GoogleTest), run on `windows-latest` in CI.
-* Enum wire formats are pinned twice (native `static_assert`s and Dart
-  contract tests) so the two sides cannot drift apart silently.
 
 ## 0.4.0
 

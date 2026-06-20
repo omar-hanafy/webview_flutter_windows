@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "webview_windows_example" "\0"
+            VALUE "FileDescription", "webview_flutter_windows_example" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "webview_windows_example" "\0"
+            VALUE "InternalName", "webview_flutter_windows_example" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "webview_windows_example.exe" "\0"
-            VALUE "ProductName", "webview_windows_example" "\0"
+            VALUE "OriginalFilename", "webview_flutter_windows_example.exe" "\0"
+            VALUE "ProductName", "webview_flutter_windows_example" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
