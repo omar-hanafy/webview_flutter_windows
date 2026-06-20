@@ -1,3 +1,8 @@
+## 1.0.0-dev.2
+
+Automation verification prerelease for the `webview_flutter_windows` 1.0.0
+release lane. No API changes since `1.0.0-dev.1`.
+
 ## 1.0.0-dev.1
 
 Prerelease of the `webview_flutter_windows` 1.0.0 package rename and rebuild.
