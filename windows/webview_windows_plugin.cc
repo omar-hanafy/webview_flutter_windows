@@ -1,4 +1,4 @@
-#include "include/webview_windows/webview_windows_plugin.h"
+#include "include/webview_flutter_windows/webview_windows_plugin.h"
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>

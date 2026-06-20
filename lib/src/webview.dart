@@ -4,9 +4,8 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-
-import 'cursor.dart';
-import 'enums.dart';
+import 'package:webview_flutter_windows/src/cursor.dart';
+import 'package:webview_flutter_windows/src/enums.dart';
 
 /// A snapshot of the webview's navigation history state.
 class HistoryChanged {

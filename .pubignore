@@ -1,0 +1,10 @@
+.DS_Store
+.dart_tool/
+.github/
+.idea/
+*.iml
+build/
+example/build/
+example/pubspec.lock
+pulls/
+pubspec.lock

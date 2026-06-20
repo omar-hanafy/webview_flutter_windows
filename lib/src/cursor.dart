@@ -39,5 +39,6 @@ const Map<String, SystemMouseCursor> _cursors = {
   'zoomOut': SystemMouseCursors.zoomOut,
 };
 
+/// Returns the Flutter mouse cursor matching the native cursor [name].
 SystemMouseCursor getCursorByName(String name) =>
     _cursors[name] ?? SystemMouseCursors.basic;

@@ -21,7 +21,7 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:webview_windows/webview_windows.dart';
+import 'package:webview_flutter_windows/webview_flutter_windows.dart';
 import 'package:win32/win32.dart';
 
 const String _testPageHtml = '''
