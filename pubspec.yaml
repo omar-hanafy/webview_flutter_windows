@@ -2,7 +2,7 @@ name: webview_flutter_windows
 description: >-
   A WebView2-powered webview for Flutter on Windows with seamless composition,
   keyboard focus integration, and a typed event API.
-version: 1.0.0
+version: 1.0.0-dev.1
 repository: https://github.com/omar-hanafy/webview_flutter_windows
 issue_tracker: https://github.com/omar-hanafy/webview_flutter_windows/issues
 topics:

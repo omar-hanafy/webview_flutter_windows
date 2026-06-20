@@ -1,3 +1,8 @@
+## 1.0.0-dev.1
+
+Prerelease of the `webview_flutter_windows` 1.0.0 package rename and rebuild.
+See the 1.0.0 notes below for the full migration and feature details.
+
 ## 1.0.0
 
 First stable release of `webview_flutter_windows`
