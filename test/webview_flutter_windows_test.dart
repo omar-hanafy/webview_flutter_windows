@@ -286,6 +286,11 @@ void main() {
       expect(single(), isMethodCall('setPopupWindowPolicy', arguments: 1));
     });
 
+    test('setContextMenuEnabled', () async {
+      await controller.setContextMenuEnabled(true);
+      expect(single(), isMethodCall('setContextMenuEnabled', arguments: true));
+    });
+
     test('suspend and resume', () async {
       await controller.suspend();
       await controller.resume();

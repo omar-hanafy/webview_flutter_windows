@@ -106,6 +106,7 @@ class _BrowserPaneState extends State<BrowserPane> {
   Future<void> _initWebview() async {
     await _controller.initialize();
     await _controller.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
+    await _controller.setContextMenuEnabled(false);
     await _controller.loadUrl('https://flutter.dev');
     if (mounted) {
       setState(() {});
