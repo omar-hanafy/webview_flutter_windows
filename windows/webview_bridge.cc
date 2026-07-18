@@ -125,6 +125,8 @@ constexpr auto kMethodClearCookies = "clearCookies";
 constexpr auto kMethodClearCache = "clearCache";
 constexpr auto kMethodSetCacheDisabled = "setCacheDisabled";
 constexpr auto kMethodSetPopupWindowPolicy = "setPopupWindowPolicy";
+constexpr auto kMethodSetDefaultContextMenusEnabled =
+    "setDefaultContextMenusEnabled";
 constexpr auto kMethodSetFpsLimit = "setFpsLimit";
 constexpr auto kMethodMoveFocus = "moveFocus";
 
@@ -848,6 +850,18 @@ void WebviewBridge::HandleMethodCall(
           break;
       }
       return result->Success();
+    }
+    return result->Error(kErrorInvalidArgs);
+  }
+
+  // setDefaultContextMenusEnabled: bool
+  if (method_name.compare(kMethodSetDefaultContextMenusEnabled) == 0) {
+    if (const auto enabled = std::get_if<bool>(method_call.arguments())) {
+      if (webview_->SetDefaultContextMenusEnabled(*enabled)) {
+        return result->Success();
+      }
+      return result->Error(kMethodFailed,
+                           "Updating the default context menu setting failed.");
     }
     return result->Error(kErrorInvalidArgs);
   }

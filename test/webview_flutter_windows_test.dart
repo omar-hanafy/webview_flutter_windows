@@ -152,6 +152,10 @@ void main() {
       await expectLater(controller.loadUrl('https://a'), throwsStateError);
       await expectLater(controller.reload(), throwsStateError);
       await expectLater(controller.executeScript('1'), throwsStateError);
+      await expectLater(
+        controller.setDefaultContextMenusEnabled(true),
+        throwsStateError,
+      );
     });
   });
 
@@ -284,6 +288,41 @@ void main() {
     test('setPopupWindowPolicy sends the policy index', () async {
       await controller.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
       expect(single(), isMethodCall('setPopupWindowPolicy', arguments: 1));
+    });
+
+    test('setDefaultContextMenusEnabled sends both enabled states', () async {
+      await controller.setDefaultContextMenusEnabled(true);
+      await controller.setDefaultContextMenusEnabled(false);
+      expect(instanceLog, [
+        isMethodCall('setDefaultContextMenusEnabled', arguments: true),
+        isMethodCall('setDefaultContextMenusEnabled', arguments: false),
+      ]);
+    });
+
+    test('setDefaultContextMenusEnabled propagates native failures', () async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('io.jns.webview.win/1'),
+        (call) async {
+          instanceLog.add(call);
+          throw PlatformException(
+            code: 'method_failed',
+            message: 'Updating the default context menu setting failed.',
+          );
+        },
+      );
+
+      await expectLater(
+        controller.setDefaultContextMenusEnabled(true),
+        throwsA(
+          isA<PlatformException>()
+              .having((error) => error.code, 'code', 'method_failed')
+              .having(
+                (error) => error.message,
+                'message',
+                'Updating the default context menu setting failed.',
+              ),
+        ),
+      );
     });
 
     test('suspend and resume', () async {
@@ -657,6 +696,7 @@ void main() {
       await controller.setCookie(const WebviewCookie(name: 'a', value: 'b'));
       await controller.deleteCookies('a');
       await controller.setSize(const Size(100, 100));
+      await controller.setDefaultContextMenusEnabled(true);
       expect(await controller.getCookies(), isEmpty);
       expect(instanceLog, isEmpty);
     });

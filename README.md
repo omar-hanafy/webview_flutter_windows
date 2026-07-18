@@ -35,8 +35,8 @@ issues, and transforms, opacity, and widgets painted on top all just work.
 - **Two-way JavaScript bridge**: execute scripts, register
   on-document-created scripts, and exchange JSON messages with the page.
 - **Browser control**: full cookie management (read, write, delete), cache,
-  user agent, zoom, background color, popup policy, virtual host mapping,
-  suspend/resume, FPS limiting, and DevTools.
+  user agent, zoom, background color, default context menus, popup policy,
+  virtual host mapping, suspend/resume, FPS limiting, and DevTools.
 - **Headless mode**: drive a controller without a widget for background
   pages, scraping, or pre-warming.
 - **Faithful input forwarding**: mouse, high-precision trackpad scrolling,
@@ -106,6 +106,7 @@ class _BrowserPaneState extends State<BrowserPane> {
   Future<void> _initWebview() async {
     await _controller.initialize();
     await _controller.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
+    await _controller.setDefaultContextMenusEnabled(true);
     await _controller.loadUrl('https://flutter.dev');
     if (mounted) {
       setState(() {});
@@ -130,6 +131,11 @@ class _BrowserPaneState extends State<BrowserPane> {
 `initialize()` completes with an error if the WebView2 Runtime is missing
 (error code `environment_creation_failed`), so wrap it in a `try`/`catch` if
 you want to show a friendly install prompt.
+
+WebView2's default context menus are disabled by this package. Opt in before
+starting the navigation that should use them, as shown above. A page may still
+suppress its menu, and WebView2 applies a setting changed after navigation
+starts to the next top-level navigation.
 
 ## Listening to events
 
