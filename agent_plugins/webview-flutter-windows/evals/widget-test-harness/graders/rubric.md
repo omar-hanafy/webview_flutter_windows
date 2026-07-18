@@ -33,3 +33,10 @@ SHOULD:
 
 FAIL (score 0): item 1 wrong (the tests would crash or hang against the
 real package), or the answer skips mocking and requires Windows.
+
+Executable check (strongest form, use when running the eval manually): put
+the produced files in a scratch Flutter project depending on
+webview_flutter_windows and run `flutter test`; both tests must pass. Known
+failure signatures: `Invalid argument: Instance of
+'MockStreamHandlerEventSink'` (arrow-bodied stream-handler callbacks) and
+"No Material widget found" (missing MaterialApp/Scaffold wrapper).
