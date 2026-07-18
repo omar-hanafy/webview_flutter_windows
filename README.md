@@ -343,6 +343,16 @@ Version 1.0.0 contains breaking changes (SDK floors, broadcast streams,
 walks through every one of them, including the focus workarounds you can now
 delete.
 
+## Contributing and support
+
+Contributions are welcome. Read the [contribution guide](.github/CONTRIBUTING.md)
+before opening a pull request. Use the repository's structured issue forms for
+bugs, feature requests, documentation improvements, and usage questions.
+
+See [Support](.github/SUPPORT.md) for help channels,
+[Security](.github/SECURITY.md) for private vulnerability reporting, and the
+[Code of Conduct](.github/CODE_OF_CONDUCT.md) for community expectations.
+
 ## Credits and license
 
 Created by [Niklas Schulze (jnschulze)](https://github.com/jnschulze); this

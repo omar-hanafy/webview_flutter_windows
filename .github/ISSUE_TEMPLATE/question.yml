@@ -1,0 +1,41 @@
+name: Usage question
+description: Ask for help using webview_flutter_windows.
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight checks
+      options:
+        - label: I read the README, troubleshooting section, and migration guide where relevant.
+          required: true
+        - label: I searched open and closed issues for an existing answer.
+          required: true
+        - label: I removed cookies, tokens, private URLs, and personal data.
+          required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to achieve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: attempts
+    attributes:
+      label: What have you tried?
+      description: Include a minimal code sample and the result you observed.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Relevant versions
+      description: Package, Flutter, Windows, and WebView2 versions.
+      placeholder: Package 1.0.0, Flutter 3.44.x, Windows 11 x64, WebView2 136.x
+    validations:
+      required: true
