@@ -1,0 +1,15 @@
+{
+  "name": "webview-flutter-windows",
+  "interface": {
+    "displayName": "webview_flutter_windows"
+  },
+  "plugins": [
+    {
+      "name": "webview-flutter-windows",
+      "source": {
+        "source": "local",
+        "path": "./agent_plugins/webview-flutter-windows"
+      }
+    }
+  ]
+}

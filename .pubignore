@@ -8,3 +8,15 @@ example/build/
 example/pubspec.lock
 pulls/
 pubspec.lock
+
+# Agent tooling: distributed from the git repository, never via pub.dev.
+# Shipping a partial plugin (skills without their hidden manifests) would
+# break installs, so the whole tree stays out of the archive.
+agent_plugins/
+.claude/
+.claude-plugin/
+.agents/
+AGENTS.md
+CLAUDE.md
+tool/
+docs/

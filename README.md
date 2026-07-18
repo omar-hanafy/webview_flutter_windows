@@ -22,6 +22,49 @@ issues, and transforms, opacity, and widgets painted on top all just work.
 
 ![Example app](https://user-images.githubusercontent.com/720469/116823636-d8b9fe00-ab85-11eb-9f91-b7bc819615ed.png)
 
+## AI coding-assistant support
+
+This repository ships an **agent plugin** for
+[Claude Code](https://code.claude.com/docs/en/discover-plugins) and
+[OpenAI Codex](https://learn.chatgpt.com/codex) with five package-specific
+skills: integrating a webview, the Dart/JavaScript bridge and local content,
+troubleshooting, writing channel-mocked tests, and migrating from
+`webview_windows` 0.x. This is tooling for coding agents, not a runtime
+feature of the Dart package, and it installs from this repository (it is not
+part of the pub.dev archive).
+
+Claude Code (CLI and desktop app) - inside a session:
+
+```text
+/plugin marketplace add omar-hanafy/webview_flutter_windows
+/plugin install webview-flutter-windows@webview-flutter-windows
+```
+
+then run `/reload-plugins` (or start a new session).
+
+OpenAI Codex (CLI; installed plugins also surface in the ChatGPT desktop
+app, not the IDE extension) - from a terminal:
+
+```sh
+codex plugin marketplace add omar-hanafy/webview_flutter_windows
+codex plugin add webview-flutter-windows@webview-flutter-windows
+```
+
+then start a new Codex session.
+
+Example prompts: "Migrate this app from webview_windows to
+webview_flutter_windows" or "The webview is blank and typing goes to the
+wrong place, debug it". Skills also work explicitly:
+`/webview-flutter-windows:integrate-webview-windows` in Claude Code,
+`$integrate-webview-windows` in Codex.
+
+The plugin is instructions-only: skills and reference files, no hooks, no
+MCP servers, no executables, no network access. Its version tracks the
+package release it shipped with, and the skills document the 1.x API
+(`setDefaultContextMenusEnabled` needs `>=1.1.0`). Full skill list,
+updating, uninstalling, validation, and maintainer notes:
+[docs/agent-plugin.md](docs/agent-plugin.md).
+
 ## Features
 
 - **Seamless composition.** Web content renders into a Flutter `Texture`

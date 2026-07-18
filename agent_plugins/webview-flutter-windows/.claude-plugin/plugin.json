@@ -1,0 +1,21 @@
+{
+  "name": "webview-flutter-windows",
+  "displayName": "webview_flutter_windows",
+  "version": "1.1.1",
+  "description": "Package-specific skills for the webview_flutter_windows Flutter package: integrate a WebView2 view in a Windows app, build a Dart/JavaScript bridge, host local content, diagnose runtime and build failures, write channel-mocked tests, and migrate from the upstream webview_windows package.",
+  "author": {
+    "name": "Omar Hanafy"
+  },
+  "homepage": "https://pub.dev/packages/webview_flutter_windows",
+  "repository": "https://github.com/omar-hanafy/webview_flutter_windows",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "flutter",
+    "dart",
+    "windows",
+    "webview",
+    "webview2",
+    "desktop"
+  ],
+  "skills": "./skills/"
+}
