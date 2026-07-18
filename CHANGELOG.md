@@ -1,3 +1,14 @@
+## 1.1.1
+
+* Add AI coding-assistant support for Claude Code and OpenAI Codex: an agent
+  plugin installable from the repository marketplace, with five
+  package-specific skills covering integration, the JavaScript bridge and
+  local content, troubleshooting, channel-mocked testing, and migration from
+  `webview_windows` 0.x. See the README's "AI coding-assistant support"
+  section
+  ([#6](https://github.com/omar-hanafy/webview_flutter_windows/pull/6)).
+* No changes to the package's Dart or native code.
+
 ## 1.1.0
 
 * Add `WebviewController.setDefaultContextMenusEnabled()` to enable or disable

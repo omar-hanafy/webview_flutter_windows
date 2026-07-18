@@ -125,6 +125,22 @@ jobs:
         run: flutter test
         working-directory: example
 
+  agent_plugin:
+    name: Agent plugin validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Validate agent plugin tree
+        run: dart tool/validate_agent_plugin.dart
+
   native_tests:
     name: Native unit tests (Windows)
     runs-on: windows-latest
