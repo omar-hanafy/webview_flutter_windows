@@ -1,3 +1,10 @@
+## 1.1.0
+
+* Add `WebviewController.setDefaultContextMenusEnabled()` to enable or disable
+  WebView2's default context menus for subsequent top-level navigations; menus
+  remain disabled by default
+  ([#3](https://github.com/omar-hanafy/webview_flutter_windows/pull/3)).
+
 ## 1.0.0
 
 First stable release of `webview_flutter_windows`
