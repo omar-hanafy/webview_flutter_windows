@@ -58,8 +58,8 @@ class WebviewCookie {
   /// The cookie value.
   final String value;
 
-  /// The host the cookie belongs to. An empty domain on [setCookie] scopes
-  /// the cookie to the document's host.
+  /// The host the cookie belongs to. An empty domain passed to
+  /// [WebviewController.setCookie] scopes the cookie to the document's host.
   final String domain;
 
   /// The URL path the cookie applies to.

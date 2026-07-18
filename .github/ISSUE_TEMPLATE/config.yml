@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/omar-hanafy/webview_flutter_windows/security/advisories/new
+    about: Report security issues privately instead of opening a public issue.
+  - name: Browse package API documentation
+    url: https://pub.dev/documentation/webview_flutter_windows/latest/
+    about: Check the published API documentation before filing a usage question.

@@ -1,0 +1,112 @@
+name: Bug report
+description: Report reproducible incorrect behavior in the package.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. Please provide a minimal, sanitized reproduction.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight checks
+      options:
+        - label: I searched open and closed issues for an existing report.
+          required: true
+        - label: I removed cookies, tokens, private URLs, and personal data from this report.
+          required: true
+
+  - type: input
+    id: package_version
+    attributes:
+      label: Package version
+      description: The exact webview_flutter_windows version or git commit.
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: flutter_version
+    attributes:
+      label: Flutter and Dart versions
+      description: Paste the first lines of flutter --version.
+      placeholder: Flutter 3.44.x, Dart 3.12.x
+    validations:
+      required: true
+
+  - type: input
+    id: windows_version
+    attributes:
+      label: Windows version and architecture
+      placeholder: Windows 11 24H2, x64
+    validations:
+      required: true
+
+  - type: input
+    id: webview2_version
+    attributes:
+      label: WebView2 Runtime version
+      description: Report WebviewController.getWebViewVersion(), or explain why it is unavailable.
+      placeholder: 136.0.3240.76
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected_area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - Controller API or lifecycle
+        - Widget rendering or composition
+        - Keyboard, mouse, touch, or focus
+        - Navigation, events, or JavaScript messaging
+        - Cookies, profile, or browser settings
+        - Native Windows or WebView2 integration
+        - Build, packaging, or toolchain
+        - Example or documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      description: Explain what is wrong and when it happens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction and steps
+      description: Provide the smallest code sample or repository link, then list exact steps.
+      placeholder: |
+        1. Initialize a controller with...
+        2. Navigate to...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Drag files here or paste text. Remove secrets and personal data.

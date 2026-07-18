@@ -14,9 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v7
 
       - name: Setup Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -24,27 +22,22 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Version channel check
-        if: github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'dev')
+      - name: Validate release lane
+        env:
+          TARGET_LANE: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+        shell: bash
         run: |
           set -euo pipefail
-          base_sha="${{ github.event.pull_request.base.sha }}"
-          head_sha="${{ github.event.pull_request.head.sha }}"
-          if git diff --name-only "$base_sha" "$head_sha" | grep -q '^pubspec.yaml$'; then
-            version=$(awk '/^version:/ {print $2}' pubspec.yaml)
-            if [[ "${{ github.base_ref }}" == "main" ]]; then
-              if [[ "$version" == *-* ]]; then
-                echo "Main requires a stable version (no pre-release suffix)."
-                exit 1
-              fi
-            else
-              if [[ "$version" != *-* ]]; then
-                echo "Dev requires a pre-release version suffix (e.g. -dev.1)."
-                exit 1
-              fi
-            fi
-          else
-            echo "pubspec.yaml not changed; skipping version channel check."
+          version=$(awk '/^version:/ {print $2; exit}' pubspec.yaml | tr -d "\"'")
+          stable_pattern='^[0-9]+\.[0-9]+\.[0-9]+(\+[0-9A-Za-z.-]+)?$'
+          prerelease_pattern='^[0-9]+\.[0-9]+\.[0-9]+-[0-9A-Za-z.-]+(\+[0-9A-Za-z.-]+)?$'
+          if [[ "$TARGET_LANE" == 'main' && ! "$version" =~ $stable_pattern ]]; then
+            echo "main requires a stable semantic version, got $version."
+            exit 1
+          fi
+          if [[ "$TARGET_LANE" == 'dev' && ! "$version" =~ $prerelease_pattern ]]; then
+            echo "dev requires a prerelease semantic version, got $version."
+            exit 1
           fi
 
       - name: Install dependencies
@@ -65,7 +58,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter (beta)
         uses: subosito/flutter-action@v2
@@ -87,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -99,32 +92,17 @@ jobs:
         run: dart pub get
 
       - name: Install pana
-        run: dart pub global activate pana
+        run: dart pub global activate pana 0.23.14
 
       - name: Run pana (full score required)
-        run: |
-          set -euo pipefail
-          pana --json . 2>/dev/null | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          sections = data.get('report', {}).get('sections', [])
-          granted = sum(s.get('grantedPoints', 0) for s in sections)
-          maximum = sum(s.get('maxPoints', 0) for s in sections)
-          status = 'PASS' if granted == maximum else 'FAIL'
-          print(f'{status}: pana score {granted}/{maximum}')
-          if granted != maximum:
-              for s in sections:
-                  if s.get('grantedPoints', 0) < s.get('maxPoints', 0):
-                      print(f\"  - {s.get('title', '?')}: {s.get('grantedPoints', 0)}/{s.get('maxPoints', 0)}\")
-              sys.exit(1)
-          "
+        run: pana --exit-code-threshold 0 .
 
   example:
     name: Example analyze & test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -151,7 +129,7 @@ jobs:
     name: Native unit tests (Windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure
         run: cmake -S windows/test -B build/native_tests
       - name: Build
@@ -163,7 +141,7 @@ jobs:
     name: Build Windows example
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
