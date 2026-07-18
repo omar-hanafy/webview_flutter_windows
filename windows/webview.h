@@ -193,7 +193,7 @@ class Webview {
   bool ClearCache();
   bool SetCacheDisabled(bool disabled);
   void SetPopupWindowPolicy(WebviewPopupWindowPolicy policy);
-  bool SetContextMenuEnabled(bool enabled);
+  bool SetDefaultContextMenusEnabled(bool enabled);
   bool SetUserAgent(const std::string& user_agent);
   bool OpenDevTools();
   bool SetBackgroundColor(int32_t color);

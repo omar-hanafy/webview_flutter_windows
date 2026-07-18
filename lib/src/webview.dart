@@ -774,15 +774,24 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return _channel.invokeMethod('setPopupWindowPolicy', popupPolicy.index);
   }
 
-  /// Enables or disables the browser's default context menu (e.g. the
-  /// right-click menu with Back, Reload, Inspect, etc.).
+  /// Enables or disables WebView2's default context menus.
   ///
-  /// Context menus are disabled by default.
-  Future<void> setContextMenuEnabled(bool enabled) async {
+  /// The plugin disables these menus when the native controller is created.
+  /// Call this after [initialize] and before starting the navigation that
+  /// should use the setting. WebView2 applies a change made after navigation
+  /// starts to the next top-level navigation.
+  ///
+  /// When enabled, WebView2 shows its default menu only when the page allows
+  /// it. The available commands depend on the clicked content and runtime.
+  ///
+  /// Throws a [PlatformException] if WebView2 cannot update the setting.
+  ///
+  /// See [the WebView2 settings documentation](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2settings?view=webview2-1.0.3967.48).
+  Future<void> setDefaultContextMenusEnabled(bool enabled) async {
     if (_isDisposed) {
       return;
     }
-    return _channel.invokeMethod('setContextMenuEnabled', enabled);
+    return _channel.invokeMethod('setDefaultContextMenusEnabled', enabled);
   }
 
   /// Suspends the webview to reduce its resource usage.

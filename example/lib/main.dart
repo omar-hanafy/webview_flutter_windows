@@ -67,6 +67,7 @@ class _ExampleBrowser extends State<ExampleBrowser> {
 
       await _controller.setBackgroundColor(Colors.transparent);
       await _controller.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
+      await _controller.setDefaultContextMenusEnabled(true);
       await _controller.loadUrl('https://flutter.dev');
 
       if (!mounted) return;

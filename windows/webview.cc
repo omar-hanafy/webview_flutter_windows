@@ -89,7 +89,7 @@ Webview::Webview(
     webview_controller_->put_ParentWindow(flutter_view_hwnd);
   }
 
-  if (SUCCEEDED(webview_->get_Settings(settings_.put()))) {
+  if (SUCCEEDED(webview_->get_Settings(settings_.put())) && settings_) {
     settings2_ = settings_.try_query<ICoreWebView2Settings2>();
 
     settings_->put_IsStatusBarEnabled(FALSE);
@@ -651,12 +651,12 @@ void Webview::SetPopupWindowPolicy(WebviewPopupWindowPolicy policy) {
   popup_window_policy_ = policy;
 }
 
-bool Webview::SetContextMenuEnabled(bool enabled) {
+bool Webview::SetDefaultContextMenusEnabled(bool enabled) {
   if (!settings_) {
     return false;
   }
-  return settings_->put_AreDefaultContextMenusEnabled(enabled ? TRUE : FALSE) ==
-         S_OK;
+  return SUCCEEDED(
+      settings_->put_AreDefaultContextMenusEnabled(enabled ? TRUE : FALSE));
 }
 
 bool Webview::SetUserAgent(const std::string& user_agent) {
