@@ -492,16 +492,26 @@ void main() {
       ]);
     });
 
-    test(
-      'setSize sends logical size and scale factor (headless use)',
-      () async {
-        await controller.setSize(const Size(1024, 768), scaleFactor: 2.0);
-        expect(
-          single(),
-          isMethodCall('setSize', arguments: [1024.0, 768.0, 2.0]),
-        );
-      },
-    );
+    test('setSize sends logical size, scale factor and a zero offset '
+        '(headless use)', () async {
+      await controller.setSize(const Size(1024, 768), scaleFactor: 2.0);
+      expect(
+        single(),
+        isMethodCall('setSize', arguments: [1024.0, 768.0, 2.0, 0.0, 0.0]),
+      );
+    });
+
+    test('setSize forwards the surface offset', () async {
+      await controller.setSize(
+        const Size(1024, 768),
+        scaleFactor: 2.0,
+        offset: const Offset(200, 150),
+      );
+      expect(
+        single(),
+        isMethodCall('setSize', arguments: [1024.0, 768.0, 2.0, 200.0, 150.0]),
+      );
+    });
 
     test('setFpsLimit', () async {
       await controller.setFpsLimit();
@@ -824,6 +834,34 @@ void main() {
       expect(args[0], 800.0);
       expect(args[1], 600.0);
       expect(args[2], tester.view.devicePixelRatio);
+      expect(args[3], 0.0);
+      expect(args[4], 0.0);
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('reports its offset when inset from the window origin', (
+      tester,
+    ) async {
+      // The offset is what WebView2 anchors popups to. Without it, a webview
+      // behind an app bar, a sidebar or padding gets every dropdown, autofill
+      // bubble and context menu displaced by exactly the inset.
+      final controller = await createInitializedController(tester);
+
+      await tester.pumpWidget(
+        Padding(
+          padding: const EdgeInsets.only(left: 120, top: 80),
+          child: Webview(controller),
+        ),
+      );
+      await tester.pump();
+
+      final setSize = instanceLog.where((c) => c.method == 'setSize').single;
+      final args = setSize.arguments as List<dynamic>;
+      expect(args[0], 680.0);
+      expect(args[1], 520.0);
+      expect(args[3], 120.0);
+      expect(args[4], 80.0);
 
       await unmountAndDispose(tester, controller);
     });

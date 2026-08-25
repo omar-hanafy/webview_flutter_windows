@@ -164,7 +164,17 @@ class Webview {
 
   bool IsValid() { return is_valid_; }
 
-  void SetSurfaceSize(size_t width, size_t height, float scale_factor);
+  // |offset_x| and |offset_y| are the webview's top-left corner in logical
+  // pixels relative to the parent window's client origin. They become the
+  // Bounds origin, which is what WebView2 anchors popups and other
+  // host-window-coordinate surfaces to. See util/surface_geometry.h.
+  void SetSurfaceSize(size_t width, size_t height, float scale_factor,
+                      double offset_x, double offset_y);
+
+  // Tells WebView2 that an ancestor window moved. Required for accessibility
+  // and for dialogs and popups to stay anchored while they are open, because
+  // WebView2 caches the parent window's screen position.
+  void NotifyParentWindowMoved();
   void SetCursorPos(double x, double y);
   void SetPointerUpdate(int32_t pointer, WebviewPointerEventKind eventKind,
                         double x, double y, double size, double pressure);

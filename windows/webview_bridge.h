@@ -23,6 +23,10 @@ class WebviewBridge {
 
   int64_t texture_id() const { return texture_id_; }
 
+  // Forwarded from the plugin when a top-level window moves, so WebView2 can
+  // re-anchor open dialogs and popups. See Webview::NotifyParentWindowMoved.
+  void NotifyParentWindowMoved() { webview_->NotifyParentWindowMoved(); }
+
  private:
   std::unique_ptr<flutter::TextureVariant> flutter_texture_;
   std::unique_ptr<TextureBridge> texture_bridge_;

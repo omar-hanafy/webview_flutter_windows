@@ -923,7 +923,20 @@ class WebviewController extends ValueNotifier<WebviewValue> {
   /// controller without embedding a [Webview] widget (background pages,
   /// scraping, pre-warming). Pages do not perform layout until they have
   /// nonzero bounds.
-  Future<void> setSize(Size size, {double scaleFactor = 1.0}) async {
+  ///
+  /// [offset] is the surface's top-left corner relative to the client origin
+  /// of the window hosting it. WebView2 anchors everything it has to place in
+  /// host-window coordinates to that origin: `<select>` dropdowns, autofill
+  /// and passkey bubbles, context menus, permission and print dialogs, and
+  /// accessibility hit-testing. Leaving it at [Offset.zero] for a surface that
+  /// is inset from the window origin displaces all of those by exactly the
+  /// inset. Headless callers have nothing on screen to anchor to and can
+  /// ignore it.
+  Future<void> setSize(
+    Size size, {
+    double scaleFactor = 1.0,
+    Offset offset = Offset.zero,
+  }) async {
     if (_isDisposed) {
       return;
     }
@@ -931,6 +944,8 @@ class WebviewController extends ValueNotifier<WebviewValue> {
       size.width,
       size.height,
       scaleFactor,
+      offset.dx,
+      offset.dy,
     ]);
   }
 }
@@ -1140,11 +1155,20 @@ class _WebviewState extends State<Webview> {
     // the async gap, so BuildContext is never used after an `await`.
     final devicePixelRatio =
         widget.scaleFactor ?? View.of(context).devicePixelRatio;
+    // Global here means relative to the FlutterView's client origin, which is
+    // the coordinate space put_ParentWindow and put_Bounds work in.
+    final offset = box.localToGlobal(Offset.zero);
     await _controller.ready;
     if (!mounted || !_controller.value.isInitialized) {
       return;
     }
-    unawaited(_controller.setSize(box.size, scaleFactor: devicePixelRatio));
+    unawaited(
+      _controller.setSize(
+        box.size,
+        scaleFactor: devicePixelRatio,
+        offset: offset,
+      ),
+    );
   }
 
   @override

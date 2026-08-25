@@ -7,6 +7,7 @@
 
 #include "util/composition.desktop.interop.h"
 #include "util/string_converter.h"
+#include "util/surface_geometry.h"
 #include "webview_host.h"
 
 using namespace Microsoft::WRL;
@@ -463,7 +464,8 @@ void Webview::RegisterEventHandlers() {
   }
 }
 
-void Webview::SetSurfaceSize(size_t width, size_t height, float scale_factor) {
+void Webview::SetSurfaceSize(size_t width, size_t height, float scale_factor,
+                             double offset_x, double offset_y) {
   if (!IsValid()) {
     return;
   }
@@ -473,11 +475,8 @@ void Webview::SetSurfaceSize(size_t width, size_t height, float scale_factor) {
     auto scaled_width = width * scale_factor;
     auto scaled_height = height * scale_factor;
 
-    RECT bounds;
-    bounds.left = 0;
-    bounds.top = 0;
-    bounds.right = static_cast<LONG>(scaled_width);
-    bounds.bottom = static_cast<LONG>(scaled_height);
+    const RECT bounds =
+        util::SurfaceBounds(width, height, scale_factor, offset_x, offset_y);
 
     surface_->put_Size({scaled_width, scaled_height});
     webview_controller_->put_RasterizationScale(scale_factor);
@@ -489,6 +488,13 @@ void Webview::SetSurfaceSize(size_t width, size_t height, float scale_factor) {
       surface_size_changed_callback_(width, height);
     }
   }
+}
+
+void Webview::NotifyParentWindowMoved() {
+  if (!IsValid()) {
+    return;
+  }
+  webview_controller_->NotifyParentWindowPositionChanged();
 }
 
 bool Webview::OpenDevTools() {

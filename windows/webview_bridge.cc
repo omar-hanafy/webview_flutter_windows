@@ -152,20 +152,32 @@ static const std::optional<std::pair<double, double>> GetPointFromArgs(
   return std::make_pair(*x, *y);
 }
 
-static const std::optional<std::tuple<double, double, double>>
-GetPointAndScaleFactorFromArgs(const flutter::EncodableValue* args) {
+// Logical size, scale factor, and the webview's logical offset from the parent
+// window's client origin: the geometry SetSurfaceSize needs.
+struct SurfaceGeometry {
+  double width;
+  double height;
+  double scale_factor;
+  double offset_x;
+  double offset_y;
+};
+
+static const std::optional<SurfaceGeometry> GetSurfaceGeometryFromArgs(
+    const flutter::EncodableValue* args) {
   const flutter::EncodableList* list =
       std::get_if<flutter::EncodableList>(args);
-  if (!list || list->size() != 3) {
+  if (!list || list->size() != 5) {
     return std::nullopt;
   }
-  const auto x = std::get_if<double>(&(*list)[0]);
-  const auto y = std::get_if<double>(&(*list)[1]);
-  const auto z = std::get_if<double>(&(*list)[2]);
-  if (!x || !y || !z) {
-    return std::nullopt;
+  double values[5];
+  for (size_t i = 0; i < 5; i++) {
+    const auto value = std::get_if<double>(&(*list)[i]);
+    if (!value) {
+      return std::nullopt;
+    }
+    values[i] = *value;
   }
-  return std::make_tuple(*x, *y, *z);
+  return SurfaceGeometry{values[0], values[1], values[2], values[3], values[4]};
 }
 
 }  // namespace
@@ -473,15 +485,16 @@ void WebviewBridge::HandleMethodCall(
     return result->Error(kErrorInvalidArgs);
   }
 
-  // setSize: [double width, double height, double scale_factor]
+  // setSize: [double width, double height, double scale_factor,
+  //           double offset_x, double offset_y]
   if (method_name.compare(kMethodSetSize) == 0) {
-    auto size = GetPointAndScaleFactorFromArgs(method_call.arguments());
-    if (size) {
-      const auto [width, height, scale_factor] = size.value();
+    auto geometry = GetSurfaceGeometryFromArgs(method_call.arguments());
+    if (geometry) {
+      const auto& g = geometry.value();
 
-      webview_->SetSurfaceSize(static_cast<size_t>(width),
-                               static_cast<size_t>(height),
-                               static_cast<float>(scale_factor));
+      webview_->SetSurfaceSize(
+          static_cast<size_t>(g.width), static_cast<size_t>(g.height),
+          static_cast<float>(g.scale_factor), g.offset_x, g.offset_y);
 
       texture_bridge_->Start();
       return result->Success();
