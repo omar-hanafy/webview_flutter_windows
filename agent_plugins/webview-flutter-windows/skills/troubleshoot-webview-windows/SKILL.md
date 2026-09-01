@@ -43,6 +43,7 @@ report that cannot be fixed locally is ready to file at
 | --- | --- | --- |
 | Widget area empty, no error | Controller not initialized yet (widget renders `SizedBox` until then) | Gate on `isInitialized`; rebuild (`setState`) after init completes |
 | Headless controller: page JS runs but layout/size is zero | No bounds | Call `setSize(const Size(w, h))`; pages do not lay out with zero bounds |
+| `<select>` dropdowns, autofill bubbles, context menus or permission prompts open displaced from the element that raised them, by the webview's distance from the window's top-left corner | Package `<1.2.0` pinned WebView2's bounds origin at the window origin; or a custom `Texture` embedding calls `setSize` without `offset` | Upgrade to `>=1.2.0` (the `Webview` widget reports its position every frame); when embedding the texture yourself, pass its offset from the window's client origin to `setSize` |
 | Frame frozen after `suspend()` | Suspended webviews stop rendering | Call `resume()` when visible again |
 | Blurry or pixelated content | Custom `scaleFactor` (e.g. 1.0) disables high-DPI rendering | Leave `scaleFactor` unset; adjust `filterQuality` only when downscaling |
 | Semi-transparent background renders opaque | WebView2 limitation: nonzero alpha is treated as opaque | Use fully transparent (`Colors.transparent`) or opaque colors |

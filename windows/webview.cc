@@ -464,29 +464,39 @@ void Webview::RegisterEventHandlers() {
   }
 }
 
-void Webview::SetSurfaceSize(size_t width, size_t height, float scale_factor,
-                             double offset_x, double offset_y) {
-  if (!IsValid()) {
+void Webview::SetSurfaceSize(const util::SurfaceGeometry& geometry) {
+  if (!IsValid() || !surface_ || geometry.width == 0 ||
+      geometry.height == 0) {
     return;
   }
 
-  if (surface_ && width > 0 && height > 0) {
-    scale_factor_ = scale_factor;
-    auto scaled_width = width * scale_factor;
-    auto scaled_height = height * scale_factor;
+  const RECT bounds = util::SurfaceBounds(geometry);
+  // Only an extent change touches the composition surface and the
+  // rasterization scale and, through the size-changed callback, recreates
+  // the texture's frame pool. A webview that merely moved, which happens
+  // every frame while it scrolls or animates, only needs its Bounds origin
+  // updated so WebView2 keeps anchoring popups to it.
+  const bool extent_changed = !util::SameExtent(geometry, surface_geometry_);
+  const bool origin_changed =
+      bounds.left != bounds_.left || bounds.top != bounds_.top;
+  if (!extent_changed && !origin_changed) {
+    return;
+  }
+  surface_geometry_ = geometry;
+  bounds_ = bounds;
 
-    const RECT bounds =
-        util::SurfaceBounds(width, height, scale_factor, offset_x, offset_y);
-
+  if (extent_changed) {
+    const auto scaled_width = geometry.width * geometry.scale_factor;
+    const auto scaled_height = geometry.height * geometry.scale_factor;
     surface_->put_Size({scaled_width, scaled_height});
-    webview_controller_->put_RasterizationScale(scale_factor);
-    if (webview_controller_->put_Bounds(bounds) != S_OK) {
-      std::cerr << "Setting webview bounds failed." << std::endl;
-    }
+    webview_controller_->put_RasterizationScale(geometry.scale_factor);
+  }
+  if (webview_controller_->put_Bounds(bounds) != S_OK) {
+    std::cerr << "Setting webview bounds failed." << std::endl;
+  }
 
-    if (surface_size_changed_callback_) {
-      surface_size_changed_callback_(width, height);
-    }
+  if (extent_changed && surface_size_changed_callback_) {
+    surface_size_changed_callback_(geometry.width, geometry.height);
   }
 }
 
@@ -703,8 +713,8 @@ void Webview::SetCursorPos(double x, double y) {
   }
 
   POINT point;
-  point.x = static_cast<LONG>(x * scale_factor_);
-  point.y = static_cast<LONG>(y * scale_factor_);
+  point.x = static_cast<LONG>(x * surface_geometry_.scale_factor);
+  point.y = static_cast<LONG>(y * surface_geometry_.scale_factor);
   last_cursor_pos_ = point;
 
   // https://docs.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2?view=webview2-1.0.774.44
@@ -750,8 +760,8 @@ void Webview::SetPointerUpdate(int32_t pointer,
   }
 
   POINT point;
-  point.x = static_cast<LONG>(x * scale_factor_);
-  point.y = static_cast<LONG>(y * scale_factor_);
+  point.x = static_cast<LONG>(x * surface_geometry_.scale_factor);
+  point.y = static_cast<LONG>(y * surface_geometry_.scale_factor);
 
   RECT rect;
   rect.left = point.x - 2;

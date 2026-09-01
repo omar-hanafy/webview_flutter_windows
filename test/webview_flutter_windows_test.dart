@@ -820,6 +820,13 @@ void main() {
       await tester.runAsync(controller.dispose);
     }
 
+    /// The `setSize` calls seen so far, each as
+    /// `[width, height, scaleFactor, offsetX, offsetY]`.
+    List<List<dynamic>> setSizeReports() => instanceLog
+        .where((c) => c.method == 'setSize')
+        .map((c) => c.arguments as List<dynamic>)
+        .toList();
+
     testWidgets('reports the surface size once the controller is ready', (
       tester,
     ) async {
@@ -864,6 +871,130 @@ void main() {
       expect(args[4], 80.0);
 
       await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('re-reports the offset when it moves without resizing', (
+      tester,
+    ) async {
+      // WebView2 anchors popups to the origin it was last told about. A
+      // webview that moves without changing size (a banner appearing above
+      // it, an animated layout, a collapsing sidebar) has to re-report, or
+      // every dropdown opened afterwards is displaced by the distance moved.
+      final controller = await createInitializedController(tester);
+
+      Widget inset(EdgeInsets padding) => Padding(
+        padding: padding,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Webview(controller, width: 300, height: 200),
+        ),
+      );
+
+      await tester.pumpWidget(inset(const EdgeInsets.only(left: 120, top: 80)));
+      await tester.pump();
+      await tester.pumpWidget(inset(const EdgeInsets.only(left: 200, top: 40)));
+      await tester.pump();
+
+      final reports = setSizeReports();
+      expect(reports, hasLength(2));
+      expect(reports.last, [
+        300.0,
+        200.0,
+        tester.view.devicePixelRatio,
+        200.0,
+        40.0,
+      ]);
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('re-reports the offset as an ancestor scrolls', (tester) async {
+      final controller = await createInitializedController(tester);
+      final scrollController = ScrollController();
+      addTearDown(scrollController.dispose);
+
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 1000),
+                Webview(controller, width: 300, height: 200),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      scrollController.jumpTo(500);
+      await tester.pump();
+
+      expect(setSizeReports().map((r) => r.sublist(3)), [
+        [0.0, 1000.0],
+        [0.0, 500.0],
+      ]);
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('re-reports when the device pixel ratio changes', (
+      tester,
+    ) async {
+      // A window dragged to a monitor with a different scale keeps its
+      // logical layout, so no size or offset changes; the surface still has
+      // to be re-rasterized at the new scale.
+      final controller = await createInitializedController(tester);
+      final initialRatio = tester.view.devicePixelRatio;
+      expect(initialRatio, isNot(2.0));
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        Align(
+          alignment: Alignment.topLeft,
+          child: Webview(controller, width: 300, height: 200),
+        ),
+      );
+      await tester.pump();
+      tester.view.devicePixelRatio = 2.0;
+      await tester.pump();
+
+      expect(setSizeReports().map((r) => r[2]), [initialRatio, 2.0]);
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('does not re-report unchanged geometry on later frames', (
+      tester,
+    ) async {
+      final controller = await createInitializedController(tester);
+
+      await tester.pumpWidget(Webview(controller));
+      await tester.pump();
+      await tester.pump();
+      // A rebuild with identical geometry is not a change either.
+      await tester.pumpWidget(Webview(controller));
+      await tester.pump();
+
+      expect(setSizeReports(), hasLength(1));
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('stops reporting once unmounted', (tester) async {
+      final controller = await createInitializedController(tester);
+
+      await tester.pumpWidget(Webview(controller));
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      await tester.pump();
+
+      expect(setSizeReports(), hasLength(1));
+
+      await tester.runAsync(controller.dispose);
     });
 
     testWidgets('honors a custom scaleFactor when reporting the size', (

@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "util/surface_geometry.h"
+
 class WebviewHost;
 
 enum class WebviewLoadingState { None, Loading, NavigationCompleted };
@@ -164,12 +166,12 @@ class Webview {
 
   bool IsValid() { return is_valid_; }
 
-  // |offset_x| and |offset_y| are the webview's top-left corner in logical
-  // pixels relative to the parent window's client origin. They become the
-  // Bounds origin, which is what WebView2 anchors popups and other
-  // host-window-coordinate surfaces to. See util/surface_geometry.h.
-  void SetSurfaceSize(size_t width, size_t height, float scale_factor,
-                      double offset_x, double offset_y);
+  // Applies |geometry| (see util/surface_geometry.h): the composition surface
+  // and rasterization scale follow its extent, the Bounds origin follows its
+  // offset. A call that changes neither is a no-op, and a change of offset
+  // alone only moves the bounds, so the widget can report its position every
+  // frame while scrolling or animating without the texture being rebuilt.
+  void SetSurfaceSize(const util::SurfaceGeometry& geometry);
 
   // Tells WebView2 that an ancestor window moved. Required for accessibility
   // and for dialogs and popups to stay anchored while they are open, because
@@ -277,7 +279,10 @@ class Webview {
   HWND flutter_view_hwnd_;
   bool owns_window_;
   bool is_valid_ = false;
-  float scale_factor_ = 1.0;
+  // The geometry last applied by SetSurfaceSize and the bounds derived from
+  // it. Pointer coordinates are scaled by surface_geometry_.scale_factor.
+  util::SurfaceGeometry surface_geometry_;
+  RECT bounds_ = {};
   wil::com_ptr<ICoreWebView2CompositionController> composition_controller_;
   wil::com_ptr<ICoreWebView2Controller3> webview_controller_;
   wil::com_ptr<ICoreWebView2> webview_;
