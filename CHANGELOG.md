@@ -1,3 +1,22 @@
+## 1.2.0
+
+* Fix WebView2 popups opening displaced from the element that raised them
+  whenever the webview was not at the window's top-left corner: `<select>`
+  dropdowns, autofill and passkey bubbles, context menus, permission and
+  print dialogs, and accessibility hit-testing. The `Webview` widget now
+  reports its position to WebView2 after every frame in which its size,
+  offset or scale factor changed, so scrolling, animations and DPI changes
+  keep popups anchored, and window moves are forwarded so popups that are
+  already open stay put
+  ([#7](https://github.com/omar-hanafy/webview_flutter_windows/issues/7),
+  [#8](https://github.com/omar-hanafy/webview_flutter_windows/pull/8);
+  thanks to @perkinsben-sst).
+* Add an optional `offset` parameter to `WebviewController.setSize` for apps
+  that embed the controller's texture with their own widget: pass the
+  texture's offset from the window's client origin so WebView2 anchors popups
+  correctly. Headless callers can leave it at `Offset.zero`
+  ([#8](https://github.com/omar-hanafy/webview_flutter_windows/pull/8)).
+
 ## 1.1.1
 
 * Add AI coding-assistant support for Claude Code and OpenAI Codex: an agent
