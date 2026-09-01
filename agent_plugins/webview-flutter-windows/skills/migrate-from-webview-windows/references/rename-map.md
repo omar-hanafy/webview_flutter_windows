@@ -49,7 +49,8 @@ Underlying wire indexes are unchanged.
 
 - `controller.focus()`, static `WebviewController.releaseFocus()`
 - `controller.onFocusChanged` (`Stream<bool>`), `controller.hasNativeFocus`
-- `controller.setSize(Size, {double scaleFactor})` for headless use
+- `controller.setSize(Size, {double scaleFactor, Offset offset})` for headless
+  use and custom texture embedding
 - `controller.getCookies` / `setCookie` / `deleteCookies` and the
   `WebviewCookie` model (alongside the existing `clearCookies`)
 - `controller.setDefaultContextMenusEnabled(bool)` (>=1.1.0)

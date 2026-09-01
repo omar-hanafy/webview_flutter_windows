@@ -7,6 +7,7 @@
 #include <windows.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -76,6 +77,9 @@ class WebviewWindowsPlugin : public flutter::Plugin {
   int pending_creations_ = 0;
 
   WNDCLASS window_class_ = {};
+  // Registration id of the top-level window proc delegate that forwards
+  // window moves to the live webviews.
+  int window_proc_id_ = -1;
   flutter::PluginRegistrarWindows* registrar_;
   flutter::TextureRegistrar* textures_;
   flutter::BinaryMessenger* messenger_;
@@ -120,9 +124,27 @@ WebviewWindowsPlugin::WebviewWindowsPlugin(
   window_class_.lpfnWndProc = &DefWindowProc;
   window_class_.hInstance = GetModuleHandle(nullptr);
   RegisterClass(&window_class_);
+
+  // WebView2 caches the parent window's screen position, so an open dialog or
+  // popup stays where the window was when it opened until it is told the
+  // window moved.
+  window_proc_id_ = registrar_->RegisterTopLevelWindowProcDelegate(
+      [this](HWND, UINT message, WPARAM, LPARAM) -> std::optional<LRESULT> {
+        if (message == WM_MOVE || message == WM_MOVING) {
+          for (const auto& [id, instance] : instances_) {
+            instance->NotifyParentWindowMoved();
+          }
+        }
+        // Never consume the message: other delegates and the default handler
+        // still need it.
+        return std::nullopt;
+      });
 }
 
 WebviewWindowsPlugin::~WebviewWindowsPlugin() {
+  if (window_proc_id_ != -1) {
+    registrar_->UnregisterTopLevelWindowProcDelegate(window_proc_id_);
+  }
   instances_.clear();
   UnregisterClass(window_class_.lpszClassName, nullptr);
 }

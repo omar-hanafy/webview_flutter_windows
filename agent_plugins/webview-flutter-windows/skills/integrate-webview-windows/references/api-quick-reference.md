@@ -78,7 +78,7 @@ Calling any instance method before `initialize()` completes throws
 | `suspend` / `resume` | `Future<void>` | Reduce resource usage while hidden. |
 | `openDevTools` | `Future<void> openDevTools()` | Separate window. |
 | `setFpsLimit` | `Future<void> setFpsLimit([int? maxFps = 0])` | 0 or null removes the limit. |
-| `setSize` | `Future<void> setSize(Size size, {double scaleFactor = 1.0})` | Headless only; `Webview` widgets call it automatically. |
+| `setSize` | `Future<void> setSize(Size size, {double scaleFactor = 1.0, Offset offset = Offset.zero})` | Headless only; `Webview` widgets call it automatically whenever their size, position or scale changes. `offset` (package `>=1.2.0`) is the surface's top-left corner relative to the window's client origin; custom `Texture` embeddings must pass it or WebView2 displaces dropdowns, autofill bubbles and context menus by exactly the inset. |
 | `focus` | `Future<void> focus()` | Grab is reverted while a Flutter text input owns primary focus. |
 
 ## Streams (all broadcast; unheard events are dropped; `done` on dispose)

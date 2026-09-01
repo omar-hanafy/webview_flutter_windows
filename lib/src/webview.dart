@@ -923,7 +923,26 @@ class WebviewController extends ValueNotifier<WebviewValue> {
   /// controller without embedding a [Webview] widget (background pages,
   /// scraping, pre-warming). Pages do not perform layout until they have
   /// nonzero bounds.
-  Future<void> setSize(Size size, {double scaleFactor = 1.0}) async {
+  ///
+  /// [offset] is the surface's top-left corner, in logical pixels, relative
+  /// to the client origin of the window hosting it. WebView2 anchors
+  /// everything it has to place in host-window coordinates to that origin:
+  /// `<select>` dropdowns, autofill and passkey bubbles, context menus,
+  /// permission and print dialogs, and accessibility hit-testing. Leaving it
+  /// at [Offset.zero] for a surface that is inset from the window origin
+  /// displaces all of those by exactly the inset.
+  ///
+  /// The [Webview] widget calls this itself after every frame in which its
+  /// size, position or scale factor changed. Call it manually only for
+  /// headless controllers, which have nothing on screen to anchor to and can
+  /// ignore [offset], or when embedding the controller's texture with your
+  /// own widget, in which case [offset] must track where the texture is
+  /// painted.
+  Future<void> setSize(
+    Size size, {
+    double scaleFactor = 1.0,
+    Offset offset = Offset.zero,
+  }) async {
     if (_isDisposed) {
       return;
     }
@@ -931,6 +950,8 @@ class WebviewController extends ValueNotifier<WebviewValue> {
       size.width,
       size.height,
       scaleFactor,
+      offset.dx,
+      offset.dy,
     ]);
   }
 }
@@ -940,6 +961,12 @@ class WebviewController extends ValueNotifier<WebviewValue> {
 ///
 /// The [controller] must be initialized before the webview becomes visible;
 /// until then this widget reserves its layout space.
+///
+/// After every frame in which the widget's size, position within the window
+/// or scale factor changed, the new geometry is handed to WebView2 (see
+/// [WebviewController.setSize]). WebView2 anchors `<select>` dropdowns,
+/// autofill bubbles, context menus and permission prompts to that geometry,
+/// so they stay aligned wherever the widget is placed, scrolled or animated.
 class Webview extends StatefulWidget {
   /// The controller backing this webview.
   final WebviewController controller;
@@ -981,6 +1008,11 @@ class Webview extends StatefulWidget {
   State<Webview> createState() => _WebviewState();
 }
 
+/// What WebView2 needs to know about the surface: its logical size, its
+/// offset from the FlutterView's client origin, and the scale factor that
+/// converts both to raw pixels.
+typedef _SurfaceGeometry = ({Size size, Offset offset, double scaleFactor});
+
 class _WebviewState extends State<Webview> {
   final GlobalKey _key = GlobalKey();
   final _downButtons = <int, PointerButton>{};
@@ -993,14 +1025,18 @@ class _WebviewState extends State<Webview> {
 
   StreamSubscription<SystemMouseCursor>? _cursorSubscription;
 
+  /// The geometry last handed to [WebviewController.setSize]. Frames that
+  /// leave it unchanged cost one comparison and no channel traffic.
+  _SurfaceGeometry? _reportedGeometry;
+  bool _geometryCheckScheduled = false;
+
   @override
   void initState() {
     super.initState();
 
     _controller._permissionRequested = widget.permissionRequested;
 
-    // Report initial surface size
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reportSurfaceSize());
+    _scheduleGeometryCheck();
 
     _cursorSubscription = _controller._cursor.listen((cursor) {
       setState(() {
@@ -1024,127 +1060,159 @@ class _WebviewState extends State<Webview> {
   }
 
   Widget _buildInner() {
-    return NotificationListener<SizeChangedLayoutNotification>(
-      onNotification: (notification) {
-        _reportSurfaceSize();
-        return true;
-      },
-      child: SizeChangedLayoutNotifier(
-        child: _controller.value.isInitialized
-            ? Listener(
-                onPointerHover: (ev) {
-                  // ev.kind is for whatever reason not set to touch
-                  // even on touch input
-                  if (_pointerKind == PointerDeviceKind.touch) {
-                    // Ignoring hover events on touch for now
-                    return;
-                  }
-                  _controller._setCursorPos(ev.localPosition);
-                },
-                onPointerDown: (ev) {
-                  // Claim this pointer so the global focus route knows the
-                  // press actually reached web content (honoring hit
-                  // testing and any widgets painted over the webview).
-                  _WebviewFocusCoordinator.claimPointer(ev.pointer);
-                  _pointerKind = ev.kind;
-                  if (ev.kind == PointerDeviceKind.touch) {
-                    _controller._setPointerUpdate(
-                      WebviewPointerEventKind.down,
-                      ev.pointer,
-                      ev.localPosition,
-                      ev.size,
-                      ev.pressure,
-                    );
-                    return;
-                  }
-                  // Make WebView2 see the cursor at the exact press
-                  // location before the button event; a preceding hover may
-                  // have been elsewhere or skipped entirely.
-                  _controller._setCursorPos(ev.localPosition);
-                  final button = _getButton(ev.buttons);
-                  _downButtons[ev.pointer] = button;
-                  _controller._setPointerButtonState(button, true);
-                },
-                onPointerUp: (ev) {
-                  _pointerKind = ev.kind;
-                  if (ev.kind == PointerDeviceKind.touch) {
-                    _controller._setPointerUpdate(
-                      WebviewPointerEventKind.up,
-                      ev.pointer,
-                      ev.localPosition,
-                      ev.size,
-                      ev.pressure,
-                    );
-                    return;
-                  }
-                  final button = _downButtons.remove(ev.pointer);
-                  if (button != null) {
-                    _controller._setPointerButtonState(button, false);
-                  }
-                },
-                onPointerCancel: (ev) {
-                  _pointerKind = ev.kind;
-                  final button = _downButtons.remove(ev.pointer);
-                  if (button != null) {
-                    _controller._setPointerButtonState(button, false);
-                  }
-                },
-                onPointerMove: (ev) {
-                  _pointerKind = ev.kind;
-                  if (ev.kind == PointerDeviceKind.touch) {
-                    _controller._setPointerUpdate(
-                      WebviewPointerEventKind.update,
-                      ev.pointer,
-                      ev.localPosition,
-                      ev.size,
-                      ev.pressure,
-                    );
-                  } else {
-                    _controller._setCursorPos(ev.localPosition);
-                  }
-                },
-                onPointerSignal: (signal) {
-                  if (signal is PointerScrollEvent) {
-                    _controller._setScrollDelta(
-                      -signal.scrollDelta.dx,
-                      -signal.scrollDelta.dy,
-                    );
-                  }
-                },
-                onPointerPanZoomUpdate: (signal) {
-                  if (signal.panDelta.dx.abs() > signal.panDelta.dy.abs()) {
-                    _controller._setScrollDelta(-signal.panDelta.dx, 0);
-                  } else {
-                    _controller._setScrollDelta(0, signal.panDelta.dy);
-                  }
-                },
-                child: MouseRegion(
-                  cursor: _cursor,
-                  child: Texture(
-                    textureId: _controller._textureId,
-                    filterQuality: widget.filterQuality,
-                  ),
-                ),
-              )
-            : const SizedBox(),
-      ),
-    );
+    return _controller.value.isInitialized
+        ? Listener(
+            onPointerHover: (ev) {
+              // ev.kind is for whatever reason not set to touch
+              // even on touch input
+              if (_pointerKind == PointerDeviceKind.touch) {
+                // Ignoring hover events on touch for now
+                return;
+              }
+              _controller._setCursorPos(ev.localPosition);
+            },
+            onPointerDown: (ev) {
+              // Claim this pointer so the global focus route knows the
+              // press actually reached web content (honoring hit
+              // testing and any widgets painted over the webview).
+              _WebviewFocusCoordinator.claimPointer(ev.pointer);
+              _pointerKind = ev.kind;
+              if (ev.kind == PointerDeviceKind.touch) {
+                _controller._setPointerUpdate(
+                  WebviewPointerEventKind.down,
+                  ev.pointer,
+                  ev.localPosition,
+                  ev.size,
+                  ev.pressure,
+                );
+                return;
+              }
+              // Make WebView2 see the cursor at the exact press
+              // location before the button event; a preceding hover may
+              // have been elsewhere or skipped entirely.
+              _controller._setCursorPos(ev.localPosition);
+              final button = _getButton(ev.buttons);
+              _downButtons[ev.pointer] = button;
+              _controller._setPointerButtonState(button, true);
+            },
+            onPointerUp: (ev) {
+              _pointerKind = ev.kind;
+              if (ev.kind == PointerDeviceKind.touch) {
+                _controller._setPointerUpdate(
+                  WebviewPointerEventKind.up,
+                  ev.pointer,
+                  ev.localPosition,
+                  ev.size,
+                  ev.pressure,
+                );
+                return;
+              }
+              final button = _downButtons.remove(ev.pointer);
+              if (button != null) {
+                _controller._setPointerButtonState(button, false);
+              }
+            },
+            onPointerCancel: (ev) {
+              _pointerKind = ev.kind;
+              final button = _downButtons.remove(ev.pointer);
+              if (button != null) {
+                _controller._setPointerButtonState(button, false);
+              }
+            },
+            onPointerMove: (ev) {
+              _pointerKind = ev.kind;
+              if (ev.kind == PointerDeviceKind.touch) {
+                _controller._setPointerUpdate(
+                  WebviewPointerEventKind.update,
+                  ev.pointer,
+                  ev.localPosition,
+                  ev.size,
+                  ev.pressure,
+                );
+              } else {
+                _controller._setCursorPos(ev.localPosition);
+              }
+            },
+            onPointerSignal: (signal) {
+              if (signal is PointerScrollEvent) {
+                _controller._setScrollDelta(
+                  -signal.scrollDelta.dx,
+                  -signal.scrollDelta.dy,
+                );
+              }
+            },
+            onPointerPanZoomUpdate: (signal) {
+              if (signal.panDelta.dx.abs() > signal.panDelta.dy.abs()) {
+                _controller._setScrollDelta(-signal.panDelta.dx, 0);
+              } else {
+                _controller._setScrollDelta(0, signal.panDelta.dy);
+              }
+            },
+            child: MouseRegion(
+              cursor: _cursor,
+              child: Texture(
+                textureId: _controller._textureId,
+                filterQuality: widget.filterQuality,
+              ),
+            ),
+          )
+        : const SizedBox();
   }
 
-  void _reportSurfaceSize() async {
-    final box = _key.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null) {
+  /// Arms [_checkSurfaceGeometry] for the end of the next frame.
+  ///
+  /// Everything that can move or resize the webview on screen (layout,
+  /// scrolling, animation, a window resize, a scale factor change) produces
+  /// a Flutter frame, so comparing the geometry after each frame is what
+  /// keeps WebView2's bounds equal to the widget's rect. Post-frame callbacks
+  /// do not request frames, so an idle app pays nothing.
+  void _scheduleGeometryCheck() {
+    if (_geometryCheckScheduled) {
       return;
     }
-    // Resolve the device pixel ratio from this view (multi-window safe) before
-    // the async gap, so BuildContext is never used after an `await`.
-    final devicePixelRatio =
-        widget.scaleFactor ?? View.of(context).devicePixelRatio;
+    _geometryCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback(_checkSurfaceGeometry);
+  }
+
+  void _checkSurfaceGeometry(Duration _) {
+    _geometryCheckScheduled = false;
+    if (!mounted) {
+      return;
+    }
+    _scheduleGeometryCheck();
+
+    final box = _key.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      return;
+    }
+    final geometry = (
+      size: box.size,
+      // Global here means relative to the FlutterView's client origin, which
+      // is the coordinate space put_ParentWindow and put_Bounds work in.
+      offset: box.localToGlobal(Offset.zero),
+      // Resolved from this view rather than MediaQuery: multi-window safe and
+      // needs no ancestor.
+      scaleFactor: widget.scaleFactor ?? View.of(context).devicePixelRatio,
+    );
+    if (geometry == _reportedGeometry) {
+      return;
+    }
+    _reportedGeometry = geometry;
+    unawaited(_reportSurfaceGeometry(geometry));
+  }
+
+  Future<void> _reportSurfaceGeometry(_SurfaceGeometry geometry) async {
+    // Reports issued before the controller is ready queue up on [ready] and
+    // are delivered in order once it completes, so the newest one wins.
     await _controller.ready;
     if (!mounted || !_controller.value.isInitialized) {
       return;
     }
-    unawaited(_controller.setSize(box.size, scaleFactor: devicePixelRatio));
+    await _controller.setSize(
+      geometry.size,
+      scaleFactor: geometry.scaleFactor,
+      offset: geometry.offset,
+    );
   }
 
   @override

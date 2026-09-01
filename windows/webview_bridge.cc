@@ -3,10 +3,12 @@
 #include <flutter/event_stream_handler_functions.h>
 #include <flutter/method_result_functions.h>
 
+#include <cmath>
 #include <format>
 
 #include "texture_bridge_gpu.h"
 #include "util/cursor_util.h"
+#include "util/surface_geometry.h"
 
 namespace {
 
@@ -152,20 +154,36 @@ static const std::optional<std::pair<double, double>> GetPointFromArgs(
   return std::make_pair(*x, *y);
 }
 
-static const std::optional<std::tuple<double, double, double>>
-GetPointAndScaleFactorFromArgs(const flutter::EncodableValue* args) {
+// setSize arguments: [width, height, scale_factor, offset_x, offset_y] as
+// doubles. Sizes are logical pixels; the offset is the webview's top-left
+// corner relative to the parent window's client origin.
+static const std::optional<util::SurfaceGeometry> GetSurfaceGeometryFromArgs(
+    const flutter::EncodableValue* args) {
   const flutter::EncodableList* list =
       std::get_if<flutter::EncodableList>(args);
-  if (!list || list->size() != 3) {
+  if (!list || list->size() != 5) {
     return std::nullopt;
   }
-  const auto x = std::get_if<double>(&(*list)[0]);
-  const auto y = std::get_if<double>(&(*list)[1]);
-  const auto z = std::get_if<double>(&(*list)[2]);
-  if (!x || !y || !z) {
+  double values[5];
+  for (size_t i = 0; i < 5; i++) {
+    const auto value = std::get_if<double>(&(*list)[i]);
+    if (!value || !std::isfinite(*value)) {
+      return std::nullopt;
+    }
+    values[i] = *value;
+  }
+  // Negative sizes and a non-positive scale have no meaning, and the casts
+  // below would be undefined for them.
+  if (values[0] < 0.0 || values[1] < 0.0 || values[2] <= 0.0) {
     return std::nullopt;
   }
-  return std::make_tuple(*x, *y, *z);
+  util::SurfaceGeometry geometry;
+  geometry.width = static_cast<size_t>(values[0]);
+  geometry.height = static_cast<size_t>(values[1]);
+  geometry.scale_factor = static_cast<float>(values[2]);
+  geometry.offset_x = values[3];
+  geometry.offset_y = values[4];
+  return geometry;
 }
 
 }  // namespace
@@ -473,16 +491,12 @@ void WebviewBridge::HandleMethodCall(
     return result->Error(kErrorInvalidArgs);
   }
 
-  // setSize: [double width, double height, double scale_factor]
+  // setSize: [double width, double height, double scale_factor,
+  //           double offset_x, double offset_y]
   if (method_name.compare(kMethodSetSize) == 0) {
-    auto size = GetPointAndScaleFactorFromArgs(method_call.arguments());
-    if (size) {
-      const auto [width, height, scale_factor] = size.value();
-
-      webview_->SetSurfaceSize(static_cast<size_t>(width),
-                               static_cast<size_t>(height),
-                               static_cast<float>(scale_factor));
-
+    const auto geometry = GetSurfaceGeometryFromArgs(method_call.arguments());
+    if (geometry) {
+      webview_->SetSurfaceSize(*geometry);
       texture_bridge_->Start();
       return result->Success();
     }
