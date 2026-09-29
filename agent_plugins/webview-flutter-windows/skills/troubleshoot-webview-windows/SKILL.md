@@ -1,6 +1,6 @@
 ---
 name: troubleshoot-webview-windows
-description: Use when a Flutter Windows app using webview_flutter_windows misbehaves - a blank or frozen webview, initialize() failing with environment_creation_failed or webview_creation_failed, StateError or MissingPluginException, keyboard input stuck in the page or a text field, missing right-click context menus, popups not opening, stream events never arriving, cookies missing, blurry rendering, or Windows build failures around NuGet, WebView2 SDK, CMake, Visual Studio, or WebView2Loader.dll.
+description: Use when a Flutter Windows app using webview_flutter_windows misbehaves - a blank or frozen webview, initialize() failing with environment_creation_failed or webview_creation_failed, StateError or MissingPluginException, keyboard input stuck in the page or a text field, missing right-click context menus, DevTools or zoom controls not responding, popups not opening, stream events never arriving, cookies missing, blurry rendering, or Windows build failures around NuGet, WebView2 SDK, CMake, Visual Studio, or WebView2Loader.dll.
 ---
 
 # Troubleshoot webview_flutter_windows
@@ -77,6 +77,8 @@ usually the documented behavior:
 | Evidence | Cause | Fix |
 | --- | --- | --- |
 | No right-click context menu | Menus are **disabled by default** by this package | `await controller.setDefaultContextMenusEnabled(true)` (>=1.1.0) after `initialize()`, before the navigation that needs it; a page may still suppress its own menu |
+| DevTools keyboard shortcuts or context-menu command do nothing | User DevTools access was disabled | Call `setDevToolsEnabled(true)` (>=1.3.0) after `initialize()`, before the relevant navigation; app code can still call `openDevTools()` while user access is disabled |
+| Ctrl-based zoom does nothing | User zoom control was disabled | Call `setZoomControlEnabled(true)` (>=1.3.0) after `initialize()`, before the relevant navigation; `setZoomFactor()` and touchscreen pinch zoom are separate |
 | `target=_blank` / popups do nothing | `setPopupWindowPolicy(deny)` set, or expectation mismatch | Choose `allow` or `sameWindow` |
 | No permission prompts (camera, mic, geolocation, clipboard) | No `permissionRequested` delegate on the `Webview` widget | Provide the delegate; return `none` to fall back to WebView2 defaults |
 | Cookie list empty | `getCookies(uri)` scopes to the uri | Use `getCookies('')` for the full profile; check the expected domain/path |
@@ -95,8 +97,9 @@ usually the documented behavior:
 
 ## Diagnostic moves
 
-- `openDevTools()` opens the page's DevTools window: console errors, network
-  failures, CSP blocks.
+- `openDevTools()` opens the page's DevTools window even when
+  `setDevToolsEnabled(false)` disables the user-facing commands: console
+  errors, network failures, CSP blocks.
 - Log everything cheaply while reproducing:
   `url`, `loadingState`, `onLoadError`, `title`, `onFocusChanged` listeners
   with `debugPrint`.

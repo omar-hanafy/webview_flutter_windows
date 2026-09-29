@@ -79,7 +79,8 @@ updating, uninstalling, validation, and maintainer notes:
   on-document-created scripts, and exchange JSON messages with the page.
 - **Browser control**: full cookie management (read, write, delete), cache,
   user agent, zoom, background color, default context menus, popup policy,
-  virtual host mapping, suspend/resume, FPS limiting, and DevTools.
+  virtual host mapping, suspend/resume, FPS limiting, and controls for user
+  access to zoom and DevTools.
 - **Headless mode**: drive a controller without a widget for background
   pages, scraping, or pre-warming.
 - **Faithful input forwarding**: mouse, high-precision trackpad scrolling,
@@ -179,6 +180,27 @@ WebView2's default context menus are disabled by this package. Opt in before
 starting the navigation that should use them, as shown above. A page may still
 suppress its menu, and WebView2 applies a setting changed after navigation
 starts to the next top-level navigation.
+
+## User DevTools and zoom controls
+
+User access to DevTools and Ctrl-based zoom is enabled by default. Configure
+either setting after `initialize()` and before the navigation that should use
+it; WebView2 may apply a later change from the next top-level navigation.
+
+```dart
+await controller.initialize();
+await controller.setDevToolsEnabled(false);
+await controller.setZoomControlEnabled(false);
+await controller.loadUrl('https://example.com');
+```
+
+`setDevToolsEnabled(false)` disables the user-facing keyboard shortcuts and
+context-menu command for DevTools. It is not a security boundary, and app code
+can still call `openDevTools()`.
+
+`setZoomControlEnabled(false)` disables Ctrl-based user zoom. It does not reset
+the current zoom factor or prevent app code from calling `setZoomFactor()`.
+Touchscreen pinch zoom is a separate WebView2 setting and is not affected.
 
 ## Listening to events
 

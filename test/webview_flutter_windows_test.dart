@@ -152,6 +152,12 @@ void main() {
       await expectLater(controller.loadUrl('https://a'), throwsStateError);
       await expectLater(controller.reload(), throwsStateError);
       await expectLater(controller.executeScript('1'), throwsStateError);
+      await expectLater(controller.openDevTools(), throwsStateError);
+      await expectLater(controller.setDevToolsEnabled(false), throwsStateError);
+      await expectLater(
+        controller.setZoomControlEnabled(false),
+        throwsStateError,
+      );
       await expectLater(
         controller.setDefaultContextMenusEnabled(true),
         throwsStateError,
@@ -272,6 +278,50 @@ void main() {
       expect(single(), isMethodCall('openDevTools', arguments: null));
     });
 
+    test('setDevToolsEnabled sends both enabled states', () async {
+      await controller.setDevToolsEnabled(false);
+      await controller.setDevToolsEnabled(true);
+      expect(instanceLog, [
+        isMethodCall('setDevToolsEnabled', arguments: false),
+        isMethodCall('setDevToolsEnabled', arguments: true),
+      ]);
+    });
+
+    test('disabling user DevTools access preserves the host command', () async {
+      await controller.setDevToolsEnabled(false);
+      await controller.openDevTools();
+      expect(instanceLog, [
+        isMethodCall('setDevToolsEnabled', arguments: false),
+        isMethodCall('openDevTools', arguments: null),
+      ]);
+    });
+
+    for (final method in ['setDevToolsEnabled', 'openDevTools']) {
+      test('$method propagates native failures', () async {
+        final message = method == 'setDevToolsEnabled'
+            ? 'Updating the DevTools setting failed.'
+            : 'Opening DevTools failed.';
+        messenger.setMockMethodCallHandler(
+          const MethodChannel('io.jns.webview.win/1'),
+          (call) async {
+            instanceLog.add(call);
+            throw PlatformException(code: 'method_failed', message: message);
+          },
+        );
+
+        await expectLater(
+          method == 'setDevToolsEnabled'
+              ? controller.setDevToolsEnabled(false)
+              : controller.openDevTools(),
+          throwsA(
+            isA<PlatformException>()
+                .having((error) => error.code, 'code', 'method_failed')
+                .having((error) => error.message, 'message', message),
+          ),
+        );
+      });
+    }
+
     test('setBackgroundColor sends a signed 32-bit ARGB value', () async {
       await controller.setBackgroundColor(const Color(0xFF112233));
       expect(
@@ -283,6 +333,55 @@ void main() {
     test('setZoomFactor', () async {
       await controller.setZoomFactor(1.5);
       expect(single(), isMethodCall('setZoomFactor', arguments: 1.5));
+    });
+
+    test('setZoomControlEnabled sends both enabled states', () async {
+      await controller.setZoomControlEnabled(false);
+      await controller.setZoomControlEnabled(true);
+      expect(instanceLog, [
+        isMethodCall('setZoomControlEnabled', arguments: false),
+        isMethodCall('setZoomControlEnabled', arguments: true),
+      ]);
+    });
+
+    test(
+      'disabling user zoom leaves the zoom factor under host control',
+      () async {
+        await controller.setZoomFactor(1.5);
+        await controller.setZoomControlEnabled(false);
+        await controller.setZoomFactor(1.0);
+        expect(instanceLog, [
+          isMethodCall('setZoomFactor', arguments: 1.5),
+          isMethodCall('setZoomControlEnabled', arguments: false),
+          isMethodCall('setZoomFactor', arguments: 1.0),
+        ]);
+      },
+    );
+
+    test('setZoomControlEnabled propagates native failures', () async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('io.jns.webview.win/1'),
+        (call) async {
+          instanceLog.add(call);
+          throw PlatformException(
+            code: 'method_failed',
+            message: 'Updating the zoom control setting failed.',
+          );
+        },
+      );
+
+      await expectLater(
+        controller.setZoomControlEnabled(false),
+        throwsA(
+          isA<PlatformException>()
+              .having((error) => error.code, 'code', 'method_failed')
+              .having(
+                (error) => error.message,
+                'message',
+                'Updating the zoom control setting failed.',
+              ),
+        ),
+      );
     });
 
     test('setPopupWindowPolicy sends the policy index', () async {
@@ -708,6 +807,9 @@ void main() {
       await controller.setSize(const Size(100, 100));
       await controller.setDefaultContextMenusEnabled(true);
       expect(await controller.getCookies(), isEmpty);
+      await controller.setDevToolsEnabled(false);
+      await controller.setZoomControlEnabled(false);
+      await controller.openDevTools();
       expect(instanceLog, isEmpty);
     });
   });

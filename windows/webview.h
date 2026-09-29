@@ -207,8 +207,10 @@ class Webview {
   void SetPopupWindowPolicy(WebviewPopupWindowPolicy policy);
   bool SetDefaultContextMenusEnabled(bool enabled);
   bool SetUserAgent(const std::string& user_agent);
+  bool SetDevToolsEnabled(bool enabled);
   bool OpenDevTools();
   bool SetBackgroundColor(int32_t color);
+  bool SetZoomControlEnabled(bool enabled);
   bool SetZoomFactor(double factor);
   bool Suspend();
   bool Resume();

@@ -507,12 +507,18 @@ void Webview::NotifyParentWindowMoved() {
   webview_controller_->NotifyParentWindowPositionChanged();
 }
 
+bool Webview::SetDevToolsEnabled(bool enabled) {
+  if (!settings_) {
+    return false;
+  }
+  return SUCCEEDED(settings_->put_AreDevToolsEnabled(enabled ? TRUE : FALSE));
+}
+
 bool Webview::OpenDevTools() {
   if (!IsValid()) {
     return false;
   }
-  webview_->OpenDevToolsWindow();
-  return true;
+  return SUCCEEDED(webview_->OpenDevToolsWindow());
 }
 
 void Webview::GetCookies(const std::string& uri, GetCookiesCallback callback) {
@@ -698,6 +704,13 @@ bool Webview::SetBackgroundColor(int32_t color) {
   }
 
   return webview_controller_->put_DefaultBackgroundColor(webview_color) == S_OK;
+}
+
+bool Webview::SetZoomControlEnabled(bool enabled) {
+  if (!settings_) {
+    return false;
+  }
+  return SUCCEEDED(settings_->put_IsZoomControlEnabled(enabled ? TRUE : FALSE));
 }
 
 bool Webview::SetZoomFactor(double factor) {
