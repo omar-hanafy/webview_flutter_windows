@@ -781,7 +781,30 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return _channel.invokeMethod('setBackgroundColor', argb);
   }
 
-  /// Sets the zoom factor.
+  /// Enables or disables user zoom through keyboard and mouse controls.
+  ///
+  /// Enabled by default. When disabled, users cannot zoom with Ctrl++, Ctrl+-,
+  /// or Ctrl+mouse wheel. [setZoomFactor] remains available, and changing this
+  /// setting does not reset the current zoom factor.
+  ///
+  /// This setting does not control touch pinch zoom, which WebView2 handles
+  /// separately.
+  ///
+  /// Call this after [initialize] and before starting the navigation that
+  /// should use the setting. Changes made after navigation starts apply to
+  /// the next top-level navigation.
+  ///
+  /// Throws a [PlatformException] if WebView2 cannot update the setting.
+  ///
+  /// See [the WebView2 settings documentation](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2settings#get_iszoomcontrolenabled).
+  Future<void> setZoomControlEnabled(bool enabled) async {
+    if (_isDisposed) {
+      return;
+    }
+    return _channel.invokeMethod('setZoomControlEnabled', enabled);
+  }
+
+  /// Sets the zoom factor, even when [setZoomControlEnabled] disables user zoom.
   Future<void> setZoomFactor(double zoomFactor) async {
     if (_isDisposed) {
       return;

@@ -706,6 +706,13 @@ bool Webview::SetBackgroundColor(int32_t color) {
   return webview_controller_->put_DefaultBackgroundColor(webview_color) == S_OK;
 }
 
+bool Webview::SetZoomControlEnabled(bool enabled) {
+  if (!settings_) {
+    return false;
+  }
+  return SUCCEEDED(settings_->put_IsZoomControlEnabled(enabled ? TRUE : FALSE));
+}
+
 bool Webview::SetZoomFactor(double factor) {
   if (!IsValid()) {
     return false;

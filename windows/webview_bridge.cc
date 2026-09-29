@@ -114,6 +114,7 @@ constexpr auto kMethodSetScrollDelta = "setScrollDelta";
 constexpr auto kMethodSetUserAgent = "setUserAgent";
 constexpr auto kMethodSetBackgroundColor = "setBackgroundColor";
 constexpr auto kMethodSetZoomFactor = "setZoomFactor";
+constexpr auto kMethodSetZoomControlEnabled = "setZoomControlEnabled";
 constexpr auto kMethodOpenDevTools = "openDevTools";
 constexpr auto kMethodSetDevToolsEnabled = "setDevToolsEnabled";
 constexpr auto kMethodSuspend = "suspend";
@@ -685,6 +686,18 @@ void WebviewBridge::HandleMethodCall(
       }
       return result->Error(kErrorNotSupported,
                            "Setting the background color failed.");
+    }
+    return result->Error(kErrorInvalidArgs);
+  }
+
+  // setZoomControlEnabled: bool
+  if (method_name.compare(kMethodSetZoomControlEnabled) == 0) {
+    if (const auto enabled = std::get_if<bool>(method_call.arguments())) {
+      if (webview_->SetZoomControlEnabled(*enabled)) {
+        return result->Success();
+      }
+      return result->Error(kMethodFailed,
+                           "Updating the zoom control setting failed.");
     }
     return result->Error(kErrorInvalidArgs);
   }
