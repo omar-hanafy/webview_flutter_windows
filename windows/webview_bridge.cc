@@ -115,6 +115,7 @@ constexpr auto kMethodSetUserAgent = "setUserAgent";
 constexpr auto kMethodSetBackgroundColor = "setBackgroundColor";
 constexpr auto kMethodSetZoomFactor = "setZoomFactor";
 constexpr auto kMethodOpenDevTools = "openDevTools";
+constexpr auto kMethodSetDevToolsEnabled = "setDevToolsEnabled";
 constexpr auto kMethodSuspend = "suspend";
 constexpr auto kMethodResume = "resume";
 constexpr auto kMethodSetVirtualHostNameMapping = "setVirtualHostNameMapping";
@@ -705,7 +706,19 @@ void WebviewBridge::HandleMethodCall(
     if (webview_->OpenDevTools()) {
       return result->Success();
     }
-    return result->Error(kMethodFailed);
+    return result->Error(kMethodFailed, "Opening DevTools failed.");
+  }
+
+  // setDevToolsEnabled: bool
+  if (method_name.compare(kMethodSetDevToolsEnabled) == 0) {
+    if (const auto enabled = std::get_if<bool>(method_call.arguments())) {
+      if (webview_->SetDevToolsEnabled(*enabled)) {
+        return result->Success();
+      }
+      return result->Error(kMethodFailed,
+                           "Updating the DevTools setting failed.");
+    }
+    return result->Error(kErrorInvalidArgs);
   }
 
   // getCookies: string uri (empty for all cookies)

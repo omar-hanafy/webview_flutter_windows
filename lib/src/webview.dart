@@ -735,7 +735,32 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return _channel.invokeMethod('setCacheDisabled', disabled);
   }
 
+  /// Enables or disables the user's access to WebView2 DevTools.
+  ///
+  /// Enabled by default. When disabled, users cannot open DevTools through
+  /// keyboard shortcuts or the default context menu. [openDevTools] remains
+  /// available to the application. This setting is not a security boundary.
+  ///
+  /// Call this after [initialize] and before starting the navigation that
+  /// should use the setting. Changes made after navigation starts apply to
+  /// the next top-level navigation.
+  ///
+  /// Throws a [PlatformException] if WebView2 cannot update the setting.
+  ///
+  /// See [the WebView2 settings documentation](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2settings#get_aredevtoolsenabled).
+  Future<void> setDevToolsEnabled(bool enabled) async {
+    if (_isDisposed) {
+      return;
+    }
+    return _channel.invokeMethod('setDevToolsEnabled', enabled);
+  }
+
   /// Opens the browser DevTools in a separate window.
+  ///
+  /// Available even when [setDevToolsEnabled] disables user access. Does
+  /// nothing if the DevTools window is already open.
+  ///
+  /// Throws a [PlatformException] if WebView2 cannot open DevTools.
   Future<void> openDevTools() async {
     if (_isDisposed) {
       return;

@@ -507,12 +507,18 @@ void Webview::NotifyParentWindowMoved() {
   webview_controller_->NotifyParentWindowPositionChanged();
 }
 
+bool Webview::SetDevToolsEnabled(bool enabled) {
+  if (!settings_) {
+    return false;
+  }
+  return SUCCEEDED(settings_->put_AreDevToolsEnabled(enabled ? TRUE : FALSE));
+}
+
 bool Webview::OpenDevTools() {
   if (!IsValid()) {
     return false;
   }
-  webview_->OpenDevToolsWindow();
-  return true;
+  return SUCCEEDED(webview_->OpenDevToolsWindow());
 }
 
 void Webview::GetCookies(const std::string& uri, GetCookiesCallback callback) {

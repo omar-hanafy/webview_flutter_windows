@@ -152,6 +152,8 @@ void main() {
       await expectLater(controller.loadUrl('https://a'), throwsStateError);
       await expectLater(controller.reload(), throwsStateError);
       await expectLater(controller.executeScript('1'), throwsStateError);
+      await expectLater(controller.openDevTools(), throwsStateError);
+      await expectLater(controller.setDevToolsEnabled(false), throwsStateError);
       await expectLater(
         controller.setDefaultContextMenusEnabled(true),
         throwsStateError,
@@ -271,6 +273,50 @@ void main() {
       await controller.openDevTools();
       expect(single(), isMethodCall('openDevTools', arguments: null));
     });
+
+    test('setDevToolsEnabled sends both enabled states', () async {
+      await controller.setDevToolsEnabled(false);
+      await controller.setDevToolsEnabled(true);
+      expect(instanceLog, [
+        isMethodCall('setDevToolsEnabled', arguments: false),
+        isMethodCall('setDevToolsEnabled', arguments: true),
+      ]);
+    });
+
+    test('disabling user DevTools access preserves the host command', () async {
+      await controller.setDevToolsEnabled(false);
+      await controller.openDevTools();
+      expect(instanceLog, [
+        isMethodCall('setDevToolsEnabled', arguments: false),
+        isMethodCall('openDevTools', arguments: null),
+      ]);
+    });
+
+    for (final method in ['setDevToolsEnabled', 'openDevTools']) {
+      test('$method propagates native failures', () async {
+        final message = method == 'setDevToolsEnabled'
+            ? 'Updating the DevTools setting failed.'
+            : 'Opening DevTools failed.';
+        messenger.setMockMethodCallHandler(
+          const MethodChannel('io.jns.webview.win/1'),
+          (call) async {
+            instanceLog.add(call);
+            throw PlatformException(code: 'method_failed', message: message);
+          },
+        );
+
+        await expectLater(
+          method == 'setDevToolsEnabled'
+              ? controller.setDevToolsEnabled(false)
+              : controller.openDevTools(),
+          throwsA(
+            isA<PlatformException>()
+                .having((error) => error.code, 'code', 'method_failed')
+                .having((error) => error.message, 'message', message),
+          ),
+        );
+      });
+    }
 
     test('setBackgroundColor sends a signed 32-bit ARGB value', () async {
       await controller.setBackgroundColor(const Color(0xFF112233));
@@ -708,6 +754,8 @@ void main() {
       await controller.setSize(const Size(100, 100));
       await controller.setDefaultContextMenusEnabled(true);
       expect(await controller.getCookies(), isEmpty);
+      await controller.setDevToolsEnabled(false);
+      await controller.openDevTools();
       expect(instanceLog, isEmpty);
     });
   });
