@@ -1,3 +1,20 @@
+## 1.3.0
+
+* Add `WebviewController.setDevToolsEnabled()` to control user access to
+  WebView2 DevTools through keyboard shortcuts and context menus while
+  preserving programmatic `openDevTools()` access. User access remains enabled
+  by default
+  ([#11](https://github.com/omar-hanafy/webview_flutter_windows/issues/11),
+  [#13](https://github.com/omar-hanafy/webview_flutter_windows/pull/13)).
+* Add `WebviewController.setZoomControlEnabled()` to control Ctrl-based user
+  zoom without resetting the current zoom factor or disabling `setZoomFactor()`.
+  User zoom remains enabled by default; touch pinch zoom is separate
+  ([#12](https://github.com/omar-hanafy/webview_flutter_windows/issues/12),
+  [#13](https://github.com/omar-hanafy/webview_flutter_windows/pull/13)).
+* Report native failures from `openDevTools()` instead of always completing
+  successfully
+  ([#13](https://github.com/omar-hanafy/webview_flutter_windows/pull/13)).
+
 ## 1.2.0
 
 * Fix WebView2 popups opening displaced from the element that raised them
