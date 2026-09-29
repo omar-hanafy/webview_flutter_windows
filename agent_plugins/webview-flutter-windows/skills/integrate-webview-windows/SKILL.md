@@ -1,6 +1,6 @@
 ---
 name: integrate-webview-windows
-description: Use when adding or embedding a WebView2 browser view in a Flutter Windows desktop app with the webview_flutter_windows package - creating or wiring a WebviewController or Webview widget, configuring popups, context menus, permission requests, background color, zoom, or user agent, running a headless controller without a widget, customizing the browser environment (user data folder, Chromium flags), or detecting a missing WebView2 Runtime at startup.
+description: Use when adding or embedding a WebView2 browser view in a Flutter Windows desktop app with the webview_flutter_windows package - creating or wiring a WebviewController or Webview widget, configuring popups, context menus, DevTools, user zoom, permission requests, background color, or user agent, running a headless controller without a widget, customizing the browser environment (user data folder, Chromium flags), or detecting a missing WebView2 Runtime at startup.
 ---
 
 # Integrate webview_flutter_windows
@@ -25,7 +25,8 @@ substitute APIs from `webview_flutter` or the older `webview_windows`.
 ## Inspect the project first
 
 1. `pubspec.yaml`: is `webview_flutter_windows` already a dependency? Which
-   version? `setDefaultContextMenusEnabled` needs `>=1.1.0`.
+   version? `setDefaultContextMenusEnabled` needs `>=1.1.0`;
+   `setDevToolsEnabled` and `setZoomControlEnabled` need `>=1.3.0`.
 2. SDK floors: the package requires `sdk: ^3.12.0` and `flutter: >=3.44.0`.
    If the project's floors are lower, raise them (or flag the conflict) before
    adding the dependency.
@@ -119,8 +120,9 @@ Lifecycle rules the code above encodes:
    multiple listeners are fine, but events emitted while nobody listens are
    dropped, and there is no replay for late subscribers.
 2. **Configure before the navigation that needs it.** `setUserAgent`,
-   `setPopupWindowPolicy`, and `setDefaultContextMenusEnabled` affect
-   behavior from the next top-level navigation onward.
+   `setPopupWindowPolicy`, `setDefaultContextMenusEnabled`,
+   `setDevToolsEnabled`, and `setZoomControlEnabled` may affect behavior from
+   the next top-level navigation onward.
 3. **`initializeEnvironment` before any controller exists.** The WebView2
    environment (user data folder, browser executable, Chromium flags) is
    shared by all controllers and created lazily on first `initialize()`.
@@ -135,6 +137,8 @@ Lifecycle rules the code above encodes:
 | --- | --- | --- |
 | Popups | `setPopupWindowPolicy(allow / deny / sameWindow)` | WebView2 default opens new windows; kiosks usually want `deny` or `sameWindow`. |
 | Right-click menus | `setDefaultContextMenusEnabled(bool)` | **Disabled by default by this package.** Opt in after `initialize()` and before the relevant navigation. Requires package `>=1.1.0`. |
+| User DevTools access | `setDevToolsEnabled(bool)` | Enabled by default. Disabling removes the user-facing keyboard shortcuts and context-menu command; app code can still call `openDevTools()`. This is not a security boundary. Requires package `>=1.3.0`. |
+| Ctrl-based user zoom | `setZoomControlEnabled(bool)` | Enabled by default. Disabling does not reset the current zoom factor or block `setZoomFactor()`; touchscreen pinch zoom is separate. Requires package `>=1.3.0`. |
 | Permission prompts | `Webview(controller, permissionRequested: ...)` | Delegate receives url, `WebviewPermissionKind`, isUserInitiated; return `allow`, `deny`, or `none` (defer to WebView2 default). Without a delegate the WebView2 default applies. |
 | Background | `setBackgroundColor(color)` | Fully transparent works; semi-transparent does not (any nonzero alpha renders opaque). |
 | Scaling | `Webview(scaleFactor: ...)`, `filterQuality` | Defaults to the view's device pixel ratio (multi-window safe); leave defaults unless mimicking pre-high-DPI behavior. |
@@ -195,9 +199,9 @@ not add focus workarounds. For programmatic control: `controller.focus()`
    `dispose` need `tester.runAsync`).
 3. On a Windows machine: `flutter run -d windows`, then manually check: page
    loads, clicking into the page and typing works, clicking a Flutter text
-   field returns typing to Flutter, popup and context menu behavior matches
-   the chosen configuration. On non-Windows hosts, state explicitly that
-   runtime verification still needs a Windows run.
+   field returns typing to Flutter, and popup, context-menu, DevTools, and zoom
+   behavior matches the chosen configuration. On non-Windows hosts, state
+   explicitly that runtime verification still needs a Windows run.
 
 ## Failure handling
 

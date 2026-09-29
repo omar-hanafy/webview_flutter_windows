@@ -8,7 +8,8 @@ import 'package:webview_flutter_windows/webview_flutter_windows.dart';
 
 Windows-only Flutter plugin. Requires Dart `^3.12.0`, Flutter `>=3.44.0`,
 Windows 10 1809+ at runtime, and the WebView2 Runtime on the user's machine.
-This file mirrors the 1.1.x public API exactly; prefer it over model memory.
+This file mirrors the current 1.x public API exactly; prefer it over model
+memory.
 
 ## WebviewController statics
 
@@ -73,10 +74,12 @@ Calling any instance method before `initialize()` completes throws
 | `setUserAgent` | `Future<void> setUserAgent(String userAgent)` | |
 | `setBackgroundColor` | `Future<void> setBackgroundColor(Color color)` | Semi-transparency unsupported: nonzero alpha renders opaque. |
 | `setZoomFactor` | `Future<void> setZoomFactor(double zoomFactor)` | |
+| `setZoomControlEnabled` | `Future<void> setZoomControlEnabled(bool enabled)` | Enabled by default. Controls Ctrl-based user zoom only. Disabling does not reset the current zoom factor or block `setZoomFactor()`; touchscreen pinch zoom is separate. May apply from the next top-level navigation. Package `>=1.3.0`. |
 | `setPopupWindowPolicy` | `Future<void> setPopupWindowPolicy(WebviewPopupWindowPolicy policy)` | |
 | `setDefaultContextMenusEnabled` | `Future<void> setDefaultContextMenusEnabled(bool enabled)` | Menus are disabled by default by this package. Applies from the next top-level navigation. Package `>=1.1.0`. |
 | `suspend` / `resume` | `Future<void>` | Reduce resource usage while hidden. |
-| `openDevTools` | `Future<void> openDevTools()` | Separate window. |
+| `setDevToolsEnabled` | `Future<void> setDevToolsEnabled(bool enabled)` | Enabled by default. Controls user keyboard shortcuts and the context-menu command only; `openDevTools()` remains available. This is not a security boundary. May apply from the next top-level navigation. Package `>=1.3.0`. |
+| `openDevTools` | `Future<void> openDevTools()` | Opens a separate window, including when user DevTools access is disabled. |
 | `setFpsLimit` | `Future<void> setFpsLimit([int? maxFps = 0])` | 0 or null removes the limit. |
 | `setSize` | `Future<void> setSize(Size size, {double scaleFactor = 1.0, Offset offset = Offset.zero})` | Headless only; `Webview` widgets call it automatically whenever their size, position or scale changes. `offset` (package `>=1.2.0`) is the surface's top-left corner relative to the window's client origin; custom `Texture` embeddings must pass it or WebView2 displaces dropdowns, autofill bubbles and context menus by exactly the inset. |
 | `focus` | `Future<void> focus()` | Grab is reverted while a Flutter text input owns primary focus. |
