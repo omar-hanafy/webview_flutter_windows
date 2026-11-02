@@ -1390,7 +1390,13 @@ class _WebviewFocusCoordinator {
 
   static bool _flutterTextInputHasPrimaryFocus() {
     final context = FocusManager.instance.primaryFocus?.context;
-    if (context == null) {
+    // Flutter keeps a node's context after the widget that attached it
+    // unmounts, and a detached node can regain primary focus before any
+    // widget re-attaches it: a Scaffold drawer re-focuses its FocusScopeNode
+    // as soon as it starts opening (setFirstFocus), and
+    // FocusScopeNode.autofocus does the same for any node. Such a node is not
+    // inside a live text input, and an unmounted context must not be queried.
+    if (context == null || !context.mounted) {
       return false;
     }
     // A text input's focus node is attached inside the EditableText that
