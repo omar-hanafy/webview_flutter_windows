@@ -1,3 +1,12 @@
+## 1.3.1
+
+* Fix "Looking up a deactivated widget's ancestor is unsafe" being reported
+  every time a `Scaffold` drawer reopened while a `Webview` was mounted. The
+  webview's focus handling no longer inspects a focused node whose widget has
+  already left the tree
+  ([#15](https://github.com/omar-hanafy/webview_flutter_windows/issues/15),
+  [#16](https://github.com/omar-hanafy/webview_flutter_windows/pull/16)).
+
 ## 1.3.0
 
 * Add `WebviewController.setDevToolsEnabled()` to control user access to
