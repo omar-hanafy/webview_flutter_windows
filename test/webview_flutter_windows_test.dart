@@ -1612,6 +1612,113 @@ void main() {
 
       await unmountAndDispose(tester, controller);
     });
+
+    // Regression tests for issue #15: Flutter keeps a focus node's context
+    // after the widget that attached it unmounts, and a detached node can
+    // become primary focus again before any widget re-attaches it.
+
+    testWidgets('reopening a Scaffold drawer while a webview is mounted '
+        'reports no errors', (tester) async {
+      final controller = await createInitializedController(tester);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            appBar: AppBar(),
+            drawer: const NavigationDrawer(children: []),
+            body: Webview(controller),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Every open after the first re-focuses the drawer's FocusScopeNode
+      // while its context is still the FocusScope unmounted on the previous
+      // close.
+      for (var open = 1; open <= 3; open++) {
+        await tester.tap(find.byTooltip('Open navigation menu'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'drawer open #$open');
+
+        tester.state<ScaffoldState>(find.byType(Scaffold)).closeDrawer();
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'drawer close #$open');
+      }
+
+      await unmountAndDispose(tester, controller);
+    });
+
+    testWidgets('a native focus grab while primary focus belongs to an '
+        'unmounted widget is left alone', (tester) async {
+      final controller = await createInitializedController(tester);
+      final detachedFocus = FocusNode();
+      addTearDown(detachedFocus.dispose);
+      final showFocus = ValueNotifier<bool>(true);
+      addTearDown(showFocus.dispose);
+      final showWebview = ValueNotifier<bool>(false);
+      addTearDown(showWebview.dispose);
+      late BuildContext hostContext;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                hostContext = context;
+                return Column(
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: showWebview,
+                      builder: (context, show, child) => show
+                          ? SizedBox(
+                              width: 300,
+                              height: 300,
+                              child: Webview(controller),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: showFocus,
+                      builder: (context, show, child) => show
+                          ? Focus(
+                              focusNode: detachedFocus,
+                              child: const SizedBox.shrink(),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      // Unmount the Focus widget, then re-focus its node the way
+      // FocusScopeNode.autofocus does for any detached node. No widget ever
+      // re-attaches it, so its context stays unmounted.
+      showFocus.value = false;
+      await tester.pump();
+      FocusScope.of(hostContext).autofocus(detachedFocus);
+      await tester.pump();
+      expect(detachedFocus.hasPrimaryFocus, isTrue);
+      expect(detachedFocus.context!.mounted, isFalse);
+
+      // Mount the webview only now, so the coordinator first meets the stale
+      // context through the native focus listener rather than a Flutter
+      // focus change.
+      showWebview.value = true;
+      await tester.pump();
+
+      pluginLog.clear();
+      eventSink!.success({'type': 'focus', 'value': true});
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+      expect(controller.hasNativeFocus, isTrue);
+      expect(pluginLog.where((c) => c.method == 'reclaimFocus'), isEmpty);
+
+      await unmountAndDispose(tester, controller);
+    });
   });
 
   group('native enum contracts', () {

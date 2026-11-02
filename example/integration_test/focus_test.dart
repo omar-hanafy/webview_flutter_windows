@@ -12,6 +12,9 @@
 //  4. Typing then reaches Flutter widgets again, and the whole cycle can
 //     repeat.
 //
+// A second test reopens a Scaffold drawer next to a live webview, which made
+// the focus coordinator query an unmounted context (issue #15).
+//
 // Run with: flutter test integration_test/focus_test.dart -d windows
 
 import 'dart:ffi';
@@ -224,6 +227,39 @@ void main() {
     },
     timeout: const Timeout(Duration(minutes: 5)),
   );
+
+  testWidgets('reopening a Scaffold drawer with a live webview reports no '
+      'errors', (tester) async {
+    final webviewController = WebviewController();
+    await webviewController.initialize();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(title: const Text('Drawer')),
+          drawer: const NavigationDrawer(children: []),
+          body: Webview(webviewController),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Every open after the first re-focuses the drawer's FocusScopeNode
+    // before its FocusScope is rebuilt.
+    for (var open = 1; open <= 3; open++) {
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'drawer open #$open');
+
+      tester.state<ScaffoldState>(find.byType(Scaffold)).closeDrawer();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'drawer close #$open');
+    }
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+    await webviewController.dispose();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
 
 Future<dynamic> _webInputValue(WebviewController controller) {
