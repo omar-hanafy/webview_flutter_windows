@@ -63,7 +63,7 @@ MCP servers, no executables, no network access. Its version tracks the
 package release it shipped with, and the skills document the 1.x API
 (`setDefaultContextMenusEnabled` needs `>=1.1.0`). Full skill list,
 updating, uninstalling, validation, and maintainer notes:
-[docs/agent-plugin.md](docs/agent-plugin.md).
+[docs/agent-plugin.md](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/docs/agent-plugin.md).
 
 ## Features
 
@@ -356,7 +356,7 @@ are alive.
 ## Example app and tests
 
 A complete example (URL bar, loading indicator, DevTools, permission prompts)
-lives in [`example/`](example/): `cd example && flutter run -d windows`.
+lives in [`example/`](https://github.com/omar-hanafy/webview_flutter_windows/tree/main/example): `cd example && flutter run -d windows`.
 
 The repository also ships:
 
@@ -391,6 +391,10 @@ Windows versions older than Windows 10 1809 are not supported.
 
 ## Troubleshooting
 
+- **`unsupported_platform` during initialization.** WebView2 composition
+  requires a Windows UI thread with a dispatcher queue, graphics capture,
+  and a working Direct3D device. The plugin reuses a queue created by the
+  host or another plugin, including `flutter_inappwebview_windows`.
 - **`initialize()` fails with `environment_creation_failed`**: the WebView2
   Runtime is missing. Check `WebviewController.getWebViewVersion()` and point
   the user to the [runtime installer](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
@@ -410,16 +414,16 @@ delete.
 
 ## Contributing and support
 
-Contributions are welcome. Read the [contribution guide](.github/CONTRIBUTING.md)
+Contributions are welcome. Read the [contribution guide](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/.github/CONTRIBUTING.md)
 before opening a pull request. Use the repository's structured issue forms for
 bugs, feature requests, documentation improvements, and usage questions.
 
-See [Support](.github/SUPPORT.md) for help channels,
-[Security](.github/SECURITY.md) for private vulnerability reporting, and the
-[Code of Conduct](.github/CODE_OF_CONDUCT.md) for community expectations.
+See [Support](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/.github/SUPPORT.md) for help channels,
+[Security](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/.github/SECURITY.md) for private vulnerability reporting, and the
+[Code of Conduct](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/.github/CODE_OF_CONDUCT.md) for community expectations.
 
 ## Credits and license
 
 Created by [Niklas Schulze (jnschulze)](https://github.com/jnschulze); this
 fork is maintained by [Omar Hanafy](https://github.com/omar-hanafy).
-Licensed under the [BSD 3-Clause License](LICENSE).
+Licensed under the [BSD 3-Clause License](https://github.com/omar-hanafy/webview_flutter_windows/blob/main/LICENSE).

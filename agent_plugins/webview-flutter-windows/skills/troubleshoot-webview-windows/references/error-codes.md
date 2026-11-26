@@ -12,7 +12,7 @@ plugin sources.
 | `webview_creation_failed` | `initialize` | Environment exists but the webview/controller could not be created. |
 | `invalid_arguments` | `initializeEnvironment`, `dispose` | Malformed method-channel arguments (usually an app/package version mismatch). |
 | `invalid_id` | `dispose` | Unknown texture id. |
-| `unsupported_platform` | `initialize`, `getWebViewVersion` | Graphics capture unsupported (Windows 10 pre-1809). |
+| `unsupported_platform` | `initialize`, `initializeEnvironment` | The Windows Runtime, UI thread dispatcher queue, graphics capture, or Direct3D device is unavailable. |
 
 ## Per-instance channel (`io.jns.webview.win/<textureId>`)
 

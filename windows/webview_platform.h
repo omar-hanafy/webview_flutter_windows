@@ -22,6 +22,8 @@ class WebviewPlatform {
   rx::RoHelper* rohelper() const { return rohelper_.get(); }
 
  private:
+  bool EnsureDispatcherQueue();
+
   std::unique_ptr<rx::RoHelper> rohelper_;
   winrt::com_ptr<ABI::Windows::System::IDispatcherQueueController>
       dispatcher_queue_controller_;

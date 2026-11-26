@@ -3,6 +3,7 @@
 #include <DispatcherQueue.h>
 #include <shlobj.h>
 #include <windows.graphics.capture.h>
+#include <windows.system.h>
 
 #include <filesystem>
 #include <iostream>
@@ -10,12 +11,9 @@
 WebviewPlatform::WebviewPlatform()
     : rohelper_(std::make_unique<rx::RoHelper>(RO_INIT_SINGLETHREADED)) {
   if (rohelper_->WinRtAvailable()) {
-    DispatcherQueueOptions options{sizeof(DispatcherQueueOptions),
-                                   DQTYPE_THREAD_CURRENT, DQTAT_COM_STA};
-
-    if (FAILED(rohelper_->CreateDispatcherQueueController(
-            options, dispatcher_queue_controller_.put()))) {
-      std::cerr << "Creating DispatcherQueueController failed." << std::endl;
+    if (!EnsureDispatcherQueue()) {
+      std::cerr << "Initializing the UI thread dispatcher queue failed."
+                << std::endl;
       return;
     }
 
@@ -29,6 +27,31 @@ WebviewPlatform::WebviewPlatform()
     graphics_context_ = std::make_unique<GraphicsContext>(rohelper_.get());
     valid_ = graphics_context_->IsValid();
   }
+}
+
+bool WebviewPlatform::EnsureDispatcherQueue() {
+  HSTRING class_name;
+  HSTRING_HEADER header;
+  winrt::com_ptr<ABI::Windows::System::IDispatcherQueueStatics> statics;
+  winrt::com_ptr<ABI::Windows::System::IDispatcherQueue> queue;
+  if (FAILED(rohelper_->GetStringReference(
+          RuntimeClass_Windows_System_DispatcherQueue, &class_name, &header)) ||
+      FAILED(rohelper_->GetActivationFactory(
+          class_name, __uuidof(ABI::Windows::System::IDispatcherQueueStatics),
+          statics.put_void())) ||
+      FAILED(statics->GetForCurrentThread(queue.put()))) {
+    return false;
+  }
+  // A thread has one dispatcher queue. If the host created it, the host
+  // retains its controller and controls when the queue shuts down.
+  if (queue) {
+    return true;
+  }
+
+  DispatcherQueueOptions options{sizeof(DispatcherQueueOptions),
+                                 DQTYPE_THREAD_CURRENT, DQTAT_COM_STA};
+  return SUCCEEDED(rohelper_->CreateDispatcherQueueController(
+      options, dispatcher_queue_controller_.put()));
 }
 
 bool WebviewPlatform::IsGraphicsCaptureSessionSupported() {
