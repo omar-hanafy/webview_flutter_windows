@@ -1,3 +1,14 @@
+## 1.3.2
+
+* Fix `WebviewController.initialize()` returning `unsupported_platform` when
+  another Windows plugin has already created the UI thread's dispatcher queue.
+  The webview now reuses that queue
+  ([#18](https://github.com/omar-hanafy/webview_flutter_windows/pull/18)).
+* Build with the plugin's pinned WebView2 and WIL SDKs even when another
+  plugin has installed different versions in the same Windows build tree.
+* Fix the example and repository documentation links on the generated API
+  documentation homepage.
+
 ## 1.3.1
 
 * Fix "Looking up a deactivated widget's ancestor is unsafe" being reported
