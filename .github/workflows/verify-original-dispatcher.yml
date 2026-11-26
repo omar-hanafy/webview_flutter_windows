@@ -1,0 +1,43 @@
+name: Verify original dispatcher behavior
+on:
+  push:
+    branches: [verify/windows-dispatcher-regression]
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    name: Verify original Windows initialization failure
+    runs-on: windows-2022
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+      - name: Verify standalone WebView2
+        run: flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded
+      - name: Add the published peer
+        run: flutter pub add dev:flutter_inappwebview_windows@0.6.0
+      - name: Verify the original failure with the peer
+        shell: pwsh
+        run: |
+          if (!(Select-String -Quiet -Path windows/flutter/generated_plugin_registrant.cc -Pattern 'FlutterInappwebviewWindowsPluginCApiRegisterWithRegistrar')) {
+            throw 'The companion plugin was not registered.'
+          }
+          nuget install nlohmann.json -Version 3.11.2 -ExcludeVersion -OutputDirectory build/windows/x64/packages -NonInteractive
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $log = Join-Path $env:RUNNER_TEMP 'original.log'
+          flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded 2>&1 | Tee-Object -FilePath $log
+          $code = $LASTEXITCODE
+          $output = Get-Content -Raw $log
+          if ($code -eq 0 -or !$output.Contains('unsupported_platform')) {
+            throw 'Expected the original WebviewController.initialize() to report unsupported_platform.'
+          }
+          Write-Output 'Reproduced unsupported_platform with the existing dispatcher queue.'
+          exit 0
