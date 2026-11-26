@@ -413,65 +413,68 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return completer.future;
   }
 
-  void _handleEvent(dynamic event) {
-    final map = event as Map<dynamic, dynamic>;
+  void _handleEvent(Object? event) {
+    final map = event as Map<Object?, Object?>;
+    final payload = map['value'];
     switch (map['type']) {
       case 'urlChanged':
-        _urlStreamController.add(map['value']);
+        _urlStreamController.add(payload as String);
         break;
       case 'onLoadError':
         // The native side forwards COREWEBVIEW2_WEB_ERROR_STATUS verbatim and
         // the WebView2 runtime versions independently of this package, so a
         // newer runtime may report a status this enum does not know yet.
-        final index = map['value'] as int;
+        final index = payload as int;
         final value = index >= 0 && index < WebErrorStatus.values.length
             ? WebErrorStatus.values[index]
             : WebErrorStatus.unknown;
         _onLoadErrorStreamController.add(value);
         break;
       case 'loadingStateChanged':
-        final value = LoadingState.values[map['value']];
+        final value = LoadingState.values[payload as int];
         _loadingStateStreamController.add(value);
         break;
       case 'downloadEvent':
+        final fields = payload as Map<Object?, Object?>;
         final value = WebviewDownloadEvent(
-          WebviewDownloadEventKind.values[map['value']['kind']],
-          map['value']['url'],
-          map['value']['resultFilePath'],
-          map['value']['bytesReceived'],
-          map['value']['totalBytesToReceive'],
+          WebviewDownloadEventKind.values[fields['kind'] as int],
+          fields['url'] as String,
+          fields['resultFilePath'] as String,
+          fields['bytesReceived'] as int,
+          fields['totalBytesToReceive'] as int,
         );
         _downloadEventStreamController.add(value);
         break;
       case 'historyChanged':
+        final fields = payload as Map<Object?, Object?>;
         final value = HistoryChanged(
-          map['value']['canGoBack'],
-          map['value']['canGoForward'],
+          fields['canGoBack'] as bool,
+          fields['canGoForward'] as bool,
         );
         _historyChangedStreamController.add(value);
         break;
       case 'securityStateChanged':
-        _securityStateChangedStreamController.add(map['value']);
+        _securityStateChangedStreamController.add(payload as String);
         break;
       case 'titleChanged':
-        _titleStreamController.add(map['value']);
+        _titleStreamController.add(payload as String);
         break;
       case 'cursorChanged':
-        _cursorStreamController.add(getCursorByName(map['value']));
+        _cursorStreamController.add(getCursorByName(payload as String));
         break;
       case 'webMessageReceived':
         try {
-          final message = json.decode(map['value']);
+          final message = json.decode(payload as String);
           _webMessageStreamController.add(message);
         } catch (ex) {
           _webMessageStreamController.addError(ex);
         }
         break;
       case 'containsFullScreenElementChanged':
-        _containsFullScreenElementChangedStreamController.add(map['value']);
+        _containsFullScreenElementChangedStreamController.add(payload as bool);
         break;
       case 'focus':
-        _hasNativeFocus = map['value'] == true;
+        _hasNativeFocus = payload == true;
         _focusChangedStreamController.add(_hasNativeFocus);
         break;
     }
@@ -1300,7 +1303,7 @@ class _WebviewState extends State<Webview> {
 /// keeps native keyboard focus.**
 ///
 /// - When primary focus moves into a Flutter text input while a webview
-///   holds native focus (a dialog autofocusing its [TextField] while the
+///   holds native focus (a dialog autofocusing an [EditableText] while the
 ///   page has the keyboard), focus is handed back.
 /// - When a webview *gains* native focus while a Flutter text input owns
 ///   primary focus (any grab: [WebviewController.focus], a forwarded click,

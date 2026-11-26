@@ -21,10 +21,12 @@ set(PLUGIN_NAME "webview_flutter_windows_plugin")
 # NuGet tooling shared with the native test build (windows/test).
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nuget.cmake)
 
+set(WIL_TARGETS "build/native/Microsoft.Windows.ImplementationLibrary.targets")
+set(WEBVIEW_TARGETS "build/native/Microsoft.Web.WebView2.targets")
 ensure_nuget_package(Microsoft.Windows.ImplementationLibrary ${WIL_VERSION}
-                     build/native/Microsoft.Windows.ImplementationLibrary.targets)
+                     "${WIL_TARGETS}" WIL_PACKAGE_DIR)
 ensure_nuget_package(Microsoft.Web.WebView2 ${WEBVIEW_VERSION}
-                     build/native/Microsoft.Web.WebView2.targets)
+                     "${WEBVIEW_TARGETS}" WEBVIEW_PACKAGE_DIR)
 
 # Define source files
 set(PLUGIN_SOURCES
@@ -60,8 +62,8 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
 
 # Add dependencies
 target_link_libraries(${PLUGIN_NAME} PRIVATE
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/Microsoft.Web.WebView2.targets
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/build/native/Microsoft.Windows.ImplementationLibrary.targets
+  "${WEBVIEW_PACKAGE_DIR}/${WEBVIEW_TARGETS}"
+  "${WIL_PACKAGE_DIR}/${WIL_TARGETS}"
   flutter
   flutter_wrapper_plugin
 )

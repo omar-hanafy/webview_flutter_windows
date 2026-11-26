@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-          token: ${{ secrets.TAG_PUSH_PAT }}
+          persist-credentials: false
 
       - name: Compare package versions
         id: version
@@ -76,16 +76,34 @@ jobs:
             echo "tag=webview_flutter_windows-v$new_version"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Read the release notes from the changelog
+        if: steps.version.outputs.changed == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.value }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          awk -v heading="## $RELEASE_VERSION" '
+            /^## / { if (found) exit; found = ($0 == heading); next }
+            found { print }
+          ' CHANGELOG.md > "$notes"
+          if ! grep -q '[^[:space:]]' "$notes"; then
+            echo "Missing release notes for $RELEASE_VERSION in CHANGELOG.md."
+            exit 1
+          fi
+
       - name: Verify tag state
         id: tag_state
         if: steps.version.outputs.changed == 'true'
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           tag="$RELEASE_TAG"
-          git fetch --force --tags origin
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' fetch --tags origin
           if git show-ref --verify --quiet "refs/tags/$tag"; then
             target=$(git rev-list -n 1 "refs/tags/$tag")
             if [[ "$target" != "$GITHUB_SHA" ]]; then
@@ -102,6 +120,7 @@ jobs:
         if: steps.version.outputs.changed == 'true' && steps.tag_state.outputs.exists != 'true'
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          GH_TOKEN: ${{ secrets.TAG_PUSH_PAT }}
         shell: bash
         run: |
           set -euo pipefail
@@ -109,7 +128,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git tag "$tag" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag"
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin "refs/tags/$tag"
 
       - name: Create GitHub release
         if: steps.version.outputs.changed == 'true'
@@ -124,7 +143,7 @@ jobs:
             echo "GitHub release $tag already exists; nothing to repair."
             exit 0
           fi
-          args=("$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --target "$GITHUB_SHA")
+          args=("$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md" --target "$GITHUB_SHA")
           if [[ "${GITHUB_REF_NAME}" == 'dev' ]]; then
             args+=(--prerelease)
           fi

@@ -37,21 +37,25 @@ if(NOT NUGET)
   endif()
 endif()
 
-# Installs PACKAGE_ID at PACKAGE_VERSION into ${CMAKE_BINARY_DIR}/packages
-# unless the given sentinel file (relative to the package root) already
-# exists.
-function(ensure_nuget_package PACKAGE_ID PACKAGE_VERSION SENTINEL_FILE)
-  set(_sentinel_path "${CMAKE_BINARY_DIR}/packages/${PACKAGE_ID}/${SENTINEL_FILE}")
+# Return the installed package root in OUT_DIR. Sibling Flutter plugins can
+# use their own versions of these packages in the top-level build directory.
+function(ensure_nuget_package PACKAGE_ID PACKAGE_VERSION SENTINEL_FILE OUT_DIR)
+  set(_packages_dir "${CMAKE_CURRENT_BINARY_DIR}/packages")
+  set(_package_dir "${_packages_dir}/${PACKAGE_ID}.${PACKAGE_VERSION}")
+  set(_sentinel_path "${_package_dir}/${SENTINEL_FILE}")
   if(NOT EXISTS "${_sentinel_path}")
     message(STATUS "Installing NuGet package ${PACKAGE_ID} ${PACKAGE_VERSION}")
     execute_process(
-      COMMAND ${NUGET} install ${PACKAGE_ID} -Version ${PACKAGE_VERSION}
-              -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages
-              -NonInteractive
+      COMMAND "${NUGET}" install "${PACKAGE_ID}" -Version "${PACKAGE_VERSION}"
+              -OutputDirectory "${_packages_dir}" -NonInteractive
       RESULT_VARIABLE _nuget_result)
-    if(NOT _nuget_result EQUAL 0)
+    if(NOT _nuget_result STREQUAL "0")
       message(FATAL_ERROR
               "NuGet install failed for ${PACKAGE_ID} (exit code ${_nuget_result})")
     endif()
+    if(NOT EXISTS "${_sentinel_path}")
+      message(FATAL_ERROR "NuGet did not install the required file: ${_sentinel_path}")
+    endif()
   endif()
+  set(${OUT_DIR} "${_package_dir}" PARENT_SCOPE)
 endfunction()
