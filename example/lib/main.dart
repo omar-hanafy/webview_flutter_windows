@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 
+import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:webview_flutter_windows/webview_flutter_windows.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -34,7 +34,7 @@ class ExampleBrowser extends StatefulWidget {
 class _ExampleBrowser extends State<ExampleBrowser> {
   final _controller = WebviewController();
   final _textController = TextEditingController();
-  final List<StreamSubscription> _subscriptions = [];
+  final List<StreamSubscription<Object>> _subscriptions = [];
   bool _isWebviewSuspended = false;
 
   @override
@@ -74,7 +74,7 @@ class _ExampleBrowser extends State<ExampleBrowser> {
       setState(() {});
     } on PlatformException catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
+        showDialog<void>(
           context: context,
           builder: (_) => AlertDialog(
             title: Text('Error'),

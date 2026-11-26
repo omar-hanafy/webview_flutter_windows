@@ -10,16 +10,25 @@ permissions:
 
 jobs:
   test-stable:
-    name: Test on stable
+    name: Test on ${{ matrix.sdk.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk:
+          - {name: stable, version: ''}
+          - {name: Flutter 3.44.0, version: '3.44.0'}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - name: Setup Flutter (stable)
-        uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
+          flutter-version: ${{ matrix.sdk.version }}
           cache: true
 
       - name: Validate release lane
@@ -52,16 +61,23 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Test example at the minimum Flutter version
+        if: matrix.sdk.version == '3.44.0'
+        working-directory: example
+        run: flutter test
+
   test-beta:
     name: Test on beta
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter (beta)
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: beta
           cache: true
@@ -80,10 +96,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter (stable)
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -102,10 +120,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter (stable)
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -130,10 +150,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter (stable)
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -145,7 +167,9 @@ jobs:
     name: Native unit tests (Windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Configure
         run: cmake -S windows/test -B build/native_tests
       - name: Build
@@ -156,9 +180,12 @@ jobs:
   build_windows:
     name: Build Windows example
     runs-on: windows-latest
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -175,3 +202,17 @@ jobs:
           if (!(Test-Path "$bundle/webview_flutter_windows_example.exe")) { throw "missing example exe" }
           if (!(Test-Path "$bundle/webview_flutter_windows_plugin.dll")) { throw "missing plugin dll" }
           if (!(Test-Path "$bundle/WebView2Loader.dll")) { throw "missing WebView2Loader.dll" }
+      - name: Run the WebView2 lifecycle on Windows
+        working-directory: example
+        run: flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded
+      - name: Register a second plugin that creates a dispatcher queue
+        working-directory: example
+        run: flutter pub add dev:flutter_inappwebview_windows@0.6.0
+      - name: Run the WebView2 lifecycle with the existing dispatcher queue
+        working-directory: example
+        shell: pwsh
+        run: |
+          if (!(Select-String -Quiet -Path windows/flutter/generated_plugin_registrant.cc -Pattern 'FlutterInappwebviewWindowsPluginCApiRegisterWithRegistrar')) {
+            throw 'The companion webview plugin was not registered.'
+          }
+          flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded

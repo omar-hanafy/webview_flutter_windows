@@ -1,3 +1,6 @@
+/// @docImport 'package:webview_flutter_windows/src/webview.dart';
+library;
+
 /// The document loading state.
 // Order must match WebviewLoadingState (see webview.h)
 enum LoadingState {

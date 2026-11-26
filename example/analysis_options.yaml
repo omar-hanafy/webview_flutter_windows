@@ -1,1 +1,14 @@
-include: package:flutter_lints/flutter.yaml
+include: ../analysis_options.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - windows/flutter/ephemeral/**
+
+linter:
+  rules:
+    # The example demonstrates the plugin; it has no public package API.
+    public_member_api_docs: false
+    comment_references: false
+    avoid_print: false
+    prefer_const_constructors: false

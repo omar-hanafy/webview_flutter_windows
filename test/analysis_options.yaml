@@ -1,0 +1,8 @@
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    # Test helpers and widget fixtures do not form part of the public API.
+    public_member_api_docs: false
+    comment_references: false
+    prefer_const_constructors: false
