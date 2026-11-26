@@ -394,7 +394,9 @@ Windows versions older than Windows 10 1809 are not supported.
 - **`unsupported_platform` during initialization.** WebView2 composition
   requires a Windows UI thread with a dispatcher queue, graphics capture,
   and a working Direct3D device. The plugin reuses a queue created by the
-  host or another plugin, including `flutter_inappwebview_windows`.
+  host or another plugin, including `flutter_inappwebview_windows`. When
+  building with version 0.6.0 of that plugin, use Visual Studio 2022 for
+  its legacy C++ coroutine headers.
 - **`initialize()` fails with `environment_creation_failed`**: the WebView2
   Runtime is missing. Check `WebviewController.getWebViewVersion()` and point
   the user to the [runtime installer](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).

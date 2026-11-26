@@ -177,10 +177,21 @@ jobs:
       - name: Run
         run: ctest --test-dir build/native_tests -C Release --output-on-failure
 
-  build_windows:
-    name: Build Windows example
-    runs-on: windows-latest
+  windows_example:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Standalone WebView2 on the latest Windows runner
+            runner: windows-latest
+            peer: false
+          # The peer's legacy coroutine headers require Visual Studio 2022.
+          - name: WebView2 alongside flutter_inappwebview_windows
+            runner: windows-2022
+            peer: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -191,8 +202,40 @@ jobs:
           cache: true
       - run: flutter pub get
         working-directory: example
+      - name: Seed the build cache used by flutter_inappwebview_windows 0.6.0
+        if: matrix.peer
+        shell: pwsh
+        working-directory: example
+        run: |
+          $packages = @{
+            'Microsoft.Web.WebView2' = '1.0.2792.45'
+            'Microsoft.Windows.ImplementationLibrary' = '1.0.231216.1'
+            'nlohmann.json' = '3.11.2'
+          }
+          foreach ($id in $packages.Keys) {
+            nuget install $id -Version $packages[$id] -ExcludeVersion -OutputDirectory build/windows/x64/packages -NonInteractive
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Register a second plugin that creates a dispatcher queue
+        if: matrix.peer
+        working-directory: example
+        run: flutter pub add dev:flutter_inappwebview_windows@0.6.0
       - run: flutter build windows --release
         working-directory: example
+      - name: Verify the plugin imports its own versioned NuGet targets
+        shell: pwsh
+        working-directory: example
+        run: |
+          $plugin = 'build/windows/x64/plugins/webview_flutter_windows'
+          [xml]$project = Get-Content "$plugin/webview_flutter_windows_plugin.vcxproj" -Raw
+          $imports = $project.SelectNodes("//*[local-name()='Import']") | ForEach-Object { $_.Project.Replace('\', '/') }
+          foreach ($id in 'Microsoft.Web.WebView2', 'Microsoft.Windows.ImplementationLibrary') {
+            $package = Get-Item "$plugin/packages/$id.*/build/native/$id.targets"
+            $relative = [IO.Path]::GetRelativePath((Resolve-Path $plugin).Path, $package.FullName).Replace('\', '/')
+            if (!($imports | Where-Object { $_.EndsWith($relative, [StringComparison]::OrdinalIgnoreCase) })) {
+              throw "The Windows plugin does not import $relative"
+            }
+          }
       - name: Verify bundle contents
         shell: pwsh
         working-directory: example
@@ -202,17 +245,25 @@ jobs:
           if (!(Test-Path "$bundle/webview_flutter_windows_example.exe")) { throw "missing example exe" }
           if (!(Test-Path "$bundle/webview_flutter_windows_plugin.dll")) { throw "missing plugin dll" }
           if (!(Test-Path "$bundle/WebView2Loader.dll")) { throw "missing WebView2Loader.dll" }
-      - name: Run the WebView2 lifecycle on Windows
-        working-directory: example
-        run: flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded
-      - name: Register a second plugin that creates a dispatcher queue
-        working-directory: example
-        run: flutter pub add dev:flutter_inappwebview_windows@0.6.0
-      - name: Run the WebView2 lifecycle with the existing dispatcher queue
+      - name: Verify the companion plugin registered
+        if: matrix.peer
         working-directory: example
         shell: pwsh
         run: |
           if (!(Select-String -Quiet -Path windows/flutter/generated_plugin_registrant.cc -Pattern 'FlutterInappwebviewWindowsPluginCApiRegisterWithRegistrar')) {
             throw 'The companion webview plugin was not registered.'
           }
-          flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded
+      - name: Run the WebView2 lifecycle
+        working-directory: example
+        run: flutter test integration_test/controller_lifecycle_test.dart -d windows --reporter expanded
+
+  build_windows:
+    name: Build Windows example
+    needs: windows_example
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both Windows builds and runtime tests
+        env:
+          WINDOWS_RESULT: ${{ needs.windows_example.result }}
+        run: test "$WINDOWS_RESULT" = success

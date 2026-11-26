@@ -19,9 +19,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/nuget.cmake)
 # Header-only usage: the tests need the WebView2/WIL headers (for webview.h),
 # not the loader import library or MSBuild .targets wiring.
 ensure_nuget_package(Microsoft.Windows.ImplementationLibrary ${WIL_VERSION}
-                     build/native/Microsoft.Windows.ImplementationLibrary.targets)
+                     build/native/Microsoft.Windows.ImplementationLibrary.targets
+                     WIL_PACKAGE_DIR)
 ensure_nuget_package(Microsoft.Web.WebView2 ${WEBVIEW_VERSION}
-                     build/native/Microsoft.Web.WebView2.targets)
+                     build/native/Microsoft.Web.WebView2.targets
+                     WEBVIEW_PACKAGE_DIR)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -53,8 +55,8 @@ target_compile_definitions(webview_windows_unittests PRIVATE
 
 target_include_directories(webview_windows_unittests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/..
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/include
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/include
+  "${WEBVIEW_PACKAGE_DIR}/build/native/include"
+  "${WIL_PACKAGE_DIR}/include"
 )
 
 target_link_libraries(webview_windows_unittests PRIVATE GTest::gtest_main)
