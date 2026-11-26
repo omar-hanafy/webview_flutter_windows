@@ -219,7 +219,7 @@ jobs:
       - name: Register a second plugin that creates a dispatcher queue
         if: matrix.peer
         working-directory: example
-        run: flutter pub add dev:flutter_inappwebview_windows@0.6.0
+        run: flutter pub add flutter_inappwebview_windows@0.6.0
       - run: flutter build windows --release
         working-directory: example
       - name: Verify the plugin imports its own versioned NuGet targets
